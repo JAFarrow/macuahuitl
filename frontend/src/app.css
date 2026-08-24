@@ -1,0 +1,97 @@
+:root {
+	--bg: #fdfdfc;
+	--fg: #1c1c1c;
+	--accent: #0645ad;
+	--muted: #6b6b6b;
+	--font-body:
+		system-ui,
+		-apple-system,
+		'Segoe UI',
+		sans-serif;
+	--measure: 68ch;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #161618;
+		--fg: #e4e4e4;
+		--accent: #7cb3ff;
+		--muted: #9a9a9a;
+	}
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+* {
+	margin: 0;
+}
+
+body {
+	background: var(--bg);
+	color: var(--fg);
+	font-family: var(--font-body);
+	line-height: 1.6;
+}
+
+img,
+video {
+	max-width: 100%;
+	height: auto;
+}
+
+input,
+button,
+textarea,
+select {
+	font: inherit;
+}
+
+a {
+	color: var(--accent);
+}
+
+.prose {
+	max-width: var(--measure);
+}
+
+.prose > * + * {
+	margin-top: 1em;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+	line-height: 1.25;
+}
+
+.prose ul,
+.prose ol {
+	padding-left: 1.5em;
+}
+
+.prose code {
+	font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+	font-size: 0.9em;
+	background: var(--bg);
+	border: 1px solid var(--muted);
+	border-radius: 3px;
+	padding: 0.1em 0.3em;
+}
+
+.prose pre {
+	padding: 1em;
+	overflow-x: auto;
+	border: 1px solid var(--muted);
+	border-radius: 3px;
+}
+
+.prose pre code {
+	background: none;
+	border: none;
+	padding: 0;
+}
