@@ -11,6 +11,7 @@
 		<nav>
 			<a href="/">Home</a>
 			<a href="/posts">Posts</a>
+			<a href="/projects">Projects</a>
 		</nav>
 	</header>
 

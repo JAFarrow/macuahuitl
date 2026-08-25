@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { postComponents } from '$lib/data/posts';
+	import ContentPage from '$lib/components/ContentPage.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -11,7 +12,9 @@
 	<link rel="alternate" type="text/markdown" href="/posts/{data.slug}.md" />
 </svelte:head>
 
-<article class="prose">
-	<h1>{data.metadata.title}</h1>
+<ContentPage title={data.metadata.title}>
+	{#snippet meta()}
+		<time>{data.metadata.created}</time>
+	{/snippet}
 	<Post />
-</article>
+</ContentPage>

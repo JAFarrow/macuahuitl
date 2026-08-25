@@ -10,8 +10,8 @@ const config = {
 		adapter: adapter(),
 		prerender: {
 			handleHttpError: ({ status, path, referrer, referenceType }) => {
-				// Raw markdown at /posts/*.md will be served by the Go server,
-				// not the frontend - so 404s on those paths are expected.
+				// Raw markdown at /posts/*.md and /projects/*.md will be served by
+				// the Go server, not the frontend - so 404s on those paths are expected.
 				if (status === 404 && path.endsWith('.md')) return;
 				throw new Error(
 					`${status} ${path}${referrer ? ` (${referenceType} from ${referrer})` : ''}`

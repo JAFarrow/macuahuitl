@@ -1,24 +1,28 @@
 import type { Component } from 'svelte';
 
-export interface PostMetadata {
+export type ProjectStatus = 'seedling' | 'budding' | 'evergreen' | 'archived';
+
+export interface ProjectMetadata {
 	title: string;
 	created: string;
-	tags: string[];
+	status: ProjectStatus;
+	tech: string[];
 	summary: string;
-	status: string;
+	repo?: string;
+	link?: string;
 	draft: boolean;
 }
 
-export interface Post extends PostMetadata {
+export interface Project extends ProjectMetadata {
 	slug: string;
 }
 
 interface MarkdownModule {
-	metadata: PostMetadata;
+	metadata: ProjectMetadata;
 	default: Component;
 }
 
-const modules = import.meta.glob<MarkdownModule>('../../../../content/posts/*.md', {
+const modules = import.meta.glob<MarkdownModule>('../../../../content/projects/*.md', {
 	eager: true
 });
 
@@ -31,21 +35,21 @@ function toDateString(created: string): string {
 	return new Date(created).toISOString().slice(0, 10);
 }
 
-export const posts: Post[] = Object.entries(modules)
+export const projects: Project[] = Object.entries(modules)
 	.map(([path, mod]) => ({
 		slug: slugFromPath(path),
 		...mod.metadata,
 		created: toDateString(mod.metadata.created)
 	}))
-	.filter((post) => !post.draft)
+	.filter((project) => !project.draft)
 	.sort((a, b) => b.created.localeCompare(a.created));
 
-export const postComponents: Record<string, Component> = Object.fromEntries(
+export const projectComponents: Record<string, Component> = Object.fromEntries(
 	Object.entries(modules)
 		.filter(([, mod]) => !mod.metadata.draft)
 		.map(([path, mod]) => [slugFromPath(path), mod.default])
 );
 
-export function getPost(slug: string): Post | undefined {
-	return posts.find((post) => post.slug === slug);
+export function getProject(slug: string): Project | undefined {
+	return projects.find((project) => project.slug === slug);
 }

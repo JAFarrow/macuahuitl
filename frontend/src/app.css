@@ -95,3 +95,9 @@ a {
 	border: none;
 	padding: 0;
 }
+
+.card-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 1rem;
+}
