@@ -30,7 +30,13 @@ const config = {
 				// Raw markdown at /posts/*.md and /projects/*.md, and files under
 				// /attachments/, will be served by the Go server, not the frontend -
 				// so 404s on those paths are expected.
-				if (status === 404 && (path.endsWith('.md') || path.startsWith('/attachments/'))) return;
+				// trailingSlash: 'always' makes the prerenderer report *.md URLs with a
+				// trailing slash, so tolerate both forms.
+				if (
+					status === 404 &&
+					(path.endsWith('.md') || path.endsWith('.md/') || path.startsWith('/attachments/'))
+				)
+					return;
 				throw new Error(
 					`${status} ${path}${referrer ? ` (${referenceType} from ${referrer})` : ''}`
 				);
