@@ -23,4 +23,3 @@ I write in Obsidian anyway. Publishing should be `git push`, not a CMS. And ever
 
 SvelteKit with adapter-static prerenders every route from `content/` via mdsvex. A small Go server serves the build output plus the raw `.md` files, and handles webmentions and search.
 
-![test](40k.png)

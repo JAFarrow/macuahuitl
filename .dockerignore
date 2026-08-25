@@ -1,0 +1,10 @@
+.git
+.github
+docs
+node_modules
+frontend/node_modules
+frontend/.svelte-kit
+# frontend/build is rebuilt inside the Dockerfile, never copied from the host.
+frontend/build
+macuahuitl
+*.log

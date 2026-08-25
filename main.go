@@ -38,10 +38,13 @@ func main() {
 	mux.HandleFunc("GET /api/health", handleHealth)
 	// Vault attachments (images etc.); the frontend rewrites Obsidian bare
 	// image embeds to this prefix. StripPrefix + the sub-FS confines requests
-	// to the attachments directory (no ../ escapes into the rest of the vault).
-	mux.Handle("GET /attachments/", http.StripPrefix("/attachments/", http.FileServerFS(attachments)))
+	// to the attachments directory (no ../ escapes into the rest of the vault),
+	// and directory listings are 404ed rather than rendered.
+	mux.Handle("GET /attachments/", noListings(http.StripPrefix("/attachments/", http.FileServerFS(attachments))))
 	mux.Handle("GET /posts/{slug}", sectionHandler(content, "posts", html))
+	mux.Handle("GET /posts/{slug}/{$}", negotiateHandler(content, "posts", html))
 	mux.Handle("GET /projects/{slug}", sectionHandler(content, "projects", html))
+	mux.Handle("GET /projects/{slug}/{$}", negotiateHandler(content, "projects", html))
 	mux.Handle("GET /", html)
 
 	port := os.Getenv("PORT")
@@ -70,22 +73,43 @@ func handleHealth(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-// sectionHandler serves one vault section (posts or projects). A slug ending
-// in .md, or an Accept header containing text/markdown, gets the raw markdown;
-// anything else falls through to the prerendered HTML.
+// sectionHandler serves one vault section (posts or projects) at slash-less
+// URLs. A slug ending in .md, or an Accept header containing text/markdown,
+// gets the raw markdown; anything else falls through to the prerendered HTML.
 func sectionHandler(content fs.FS, section string, html http.Handler) http.HandlerFunc {
+	negotiate := negotiateHandler(content, section, html)
 	return func(w http.ResponseWriter, r *http.Request) {
-		slug := r.PathValue("slug")
-		markdown := strings.Contains(r.Header.Get("Accept"), "text/markdown")
-		if s, ok := strings.CutSuffix(slug, ".md"); ok {
-			slug, markdown = s, true
-		}
-		if markdown {
+		if slug, ok := strings.CutSuffix(r.PathValue("slug"), ".md"); ok {
 			serveMarkdown(w, r, content, section, slug)
+			return
+		}
+		negotiate.ServeHTTP(w, r)
+	}
+}
+
+// negotiateHandler serves a section page at its canonical trailing-slash URL:
+// Accept containing text/markdown gets the raw markdown (same draft, slug
+// validation, and 404 semantics as the .md route), anything else gets HTML.
+func negotiateHandler(content fs.FS, section string, html http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.Header.Get("Accept"), "text/markdown") {
+			serveMarkdown(w, r, content, section, r.PathValue("slug"))
 			return
 		}
 		html.ServeHTTP(w, r)
 	}
+}
+
+// noListings 404s directory requests instead of rendering the stdlib file
+// server's directory listing; individual files pass through unchanged.
+func noListings(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/") {
+			http.NotFound(w, r)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func serveMarkdown(w http.ResponseWriter, r *http.Request, content fs.FS, section, slug string) {
