@@ -7,7 +7,8 @@
 - `main.go` — the entire Go server. Deliberately one file; no `cmd/`, `internal/`, or `pkg/` — the codebase is too small for layout ceremony.
 - `content/` — the Obsidian vault (`posts/`, `projects/`, `attachments/`, `templates/`). Markdown with YAML frontmatter, standard markdown links.
 - `frontend/` — SvelteKit app (Svelte 5, mdsvex, `adapter-static`). Build output goes to `frontend/build/`.
-- `docs/update.md` — running repository-state log; keep it current when you change things.
+- `frontend/static/robots.txt` — crawler policy (allow all), copied verbatim into `frontend/build/`.
+- `frontend/src/routes/llms.txt/+server.ts` — prerendered endpoint that generates `build/llms.txt` from the vault data loaders.
 - `justfile`, `.github/workflows/go.yml`, `Dockerfile`, `render.yaml` — tooling, CI, and Render deployment.
 
 ## Commands
@@ -32,8 +33,11 @@
 - **Markdown negotiation works on both URL forms** — slash-less (`/posts/x`, also the only place a `.md` suffix is recognized) and canonical trailing-slash (`/posts/x/` via `{$}`-anchored patterns). Agents should prefer the explicit `.md` URLs anyway.
 - **Draft check is a frontmatter line-prefix scan**, not a YAML parse — keep it that way.
 - **The vite build reads `content/` directly** (`import.meta.glob` over `../../../../content/**/*.md`), so any build environment (CI, Docker) needs both directories side by side.
-- No Go tests yet; verify behavior with the curl matrix (HTML, `.md` verbatim + content type, `Accept` negotiation, draft 404, attachment bytes, `/api/health`).
+- **`/llms.txt` is build-generated, never hand-edited.** It comes from the same draft-filtered loaders (`$lib/data/posts`, `$lib/data/projects`) as the site, so vault changes regenerate it on the next deploy. `robots.txt` and `llms.txt` land in `frontend/build/` and are served by the Go file server — no Go routes involved.
+- No Go tests yet; verify behavior with the curl matrix (HTML, `.md` verbatim + content type, `Accept` negotiation, draft 404, attachment bytes, `/robots.txt`, `/llms.txt`, `/api/health`).
 
 ## Deployment
 
-Render, via `Dockerfile` (node → golang → scratch, ~27 MB image) + `render.yaml` blueprint (free plan, frankfurt, health check `/api/health`, auto-deploy on `main`). Free tier spins down when idle. Publish flow: commit vault changes → push → auto-deploy.
+Render, via `Dockerfile` (node → golang → scratch, ~27 MB image) + `render.yaml` blueprint (starter plan, frankfurt, health check `/api/health`, auto-deploy on `main`). Publish flow: commit vault changes → push → auto-deploy.
+
+`llms.txt` generation rides the existing frontend build (`npm run build`) in every environment, so CI, the Dockerfile, and `render.yaml` need no special-casing for it.

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+# Machine-readable site map for LLM agents: /llms.txt
