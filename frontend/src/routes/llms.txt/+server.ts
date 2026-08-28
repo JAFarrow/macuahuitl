@@ -18,7 +18,7 @@ export const GET: RequestHandler = () => {
 	const lines = [
 		'# macuahuitl',
 		'',
-		'> A personal site and digital garden. Notes here are perpetually unfinished.',
+		'> A personal site and digital garden.',
 		'',
 		'Every post and project is available as raw markdown: append `.md` to the slash-less',
 		'URL (e.g. `/posts/example.md`), or send `Accept: text/markdown` to any post or',

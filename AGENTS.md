@@ -9,6 +9,7 @@
 - `frontend/` — SvelteKit app (Svelte 5, mdsvex, `adapter-static`). Build output goes to `frontend/build/`.
 - `frontend/static/robots.txt` — crawler policy (allow all), copied verbatim into `frontend/build/`.
 - `frontend/src/routes/llms.txt/+server.ts` — prerendered endpoint that generates `build/llms.txt` from the vault data loaders.
+- `frontend/src/routes/sitemap.xml/+server.ts` — prerendered endpoint that generates `build/sitemap.xml` (home, section indexes, all non-draft posts/projects at their canonical trailing-slash URLs). The `SITE_URL` constant in that file is the canonical origin.
 - `justfile`, `.github/workflows/go.yml`, `Dockerfile`, `render.yaml` — tooling, CI, and Render deployment.
 
 ## Commands
@@ -28,13 +29,14 @@
 
 ## Conventions & gotchas
 
+- **Canonical origin is `https://www.justin-farrow-dev.com`** — Cloudflare 301s apex → www at the edge; `main.go`'s `canonicalHost` (via `canonicalRedirect`) 301s `macuahuitl.onrender.com` and direct-origin apex hits to it. Hardcoded in three places — `main.go`, the sitemap `SITE_URL` constant, and the `robots.txt` `Sitemap:` line; change them together if it ever moves.
 - **`trailingSlash: 'always'` is load-bearing.** Routes prerender as `route/index.html` so `http.FileServerFS` resolves everything; slash-less URLs 301 to the slash form. Don't revert without adding Go-side `.html` mapping.
 - **No mid-segment wildcards in `http.ServeMux`** (`"/posts/{slug}.md"` panics at startup). That's why one `sectionHandler` per section dispatches on `.md` suffix and `Accept` header.
 - **Markdown negotiation works on both URL forms** — slash-less (`/posts/x`, also the only place a `.md` suffix is recognized) and canonical trailing-slash (`/posts/x/` via `{$}`-anchored patterns). Agents should prefer the explicit `.md` URLs anyway.
 - **Draft check is a frontmatter line-prefix scan**, not a YAML parse — keep it that way.
 - **The vite build reads `content/` directly** (`import.meta.glob` over `../../../../content/**/*.md`), so any build environment (CI, Docker) needs both directories side by side.
-- **`/llms.txt` is build-generated, never hand-edited.** It comes from the same draft-filtered loaders (`$lib/data/posts`, `$lib/data/projects`) as the site, so vault changes regenerate it on the next deploy. `robots.txt` and `llms.txt` land in `frontend/build/` and are served by the Go file server — no Go routes involved.
-- No Go tests yet; verify behavior with the curl matrix (HTML, `.md` verbatim + content type, `Accept` negotiation, draft 404, attachment bytes, `/robots.txt`, `/llms.txt`, `/api/health`).
+- **`/llms.txt` and `/sitemap.xml` are build-generated, never hand-edited.** They come from the same draft-filtered loaders (`$lib/data/posts`, `$lib/data/projects`) as the site, so vault changes regenerate them on the next deploy. `robots.txt`, `llms.txt`, and `sitemap.xml` land in `frontend/build/` and are served by the Go file server — no Go routes involved.
+- No Go tests yet; verify behavior with the curl matrix (HTML, `.md` verbatim + content type, `Accept` negotiation, draft 404, attachment bytes, `/robots.txt`, `/llms.txt`, `/sitemap.xml`, `/api/health`).
 
 ## Observability
 
@@ -49,4 +51,4 @@
 
 Render, via `Dockerfile` (node → golang → scratch, ~27 MB image) + `render.yaml` blueprint (starter plan, frankfurt, health check `/api/health`, auto-deploy on `main`). Publish flow: commit vault changes → push → auto-deploy. Grafana credentials are `sync: false` env vars in the blueprint — set `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_HEADERS` once in the Render dashboard.
 
-`llms.txt` generation rides the existing frontend build (`npm run build`) in every environment, so CI, the Dockerfile, and `render.yaml` need no special-casing for it.
+`llms.txt` and `sitemap.xml` ride the existing frontend build (`npm run build`) in every environment, so CI, the Dockerfile, and `render.yaml` need no special-casing for them.
