@@ -5,7 +5,7 @@
 
 	const glyphs: Record<ProjectStatus, string> = {
 		seedling: '🌱',
-		budding: '🌿',
+		fruited: '🍎',
 		evergreen: '🌳',
 		archived: '📦'
 	};
@@ -23,7 +23,8 @@
 		color: var(--muted);
 	}
 
-	.badge[data-status='evergreen'] {
+	.badge[data-status='evergreen'],
+	.badge[data-status='fruited'] {
 		color: var(--accent);
 		border-color: var(--accent);
 	}
