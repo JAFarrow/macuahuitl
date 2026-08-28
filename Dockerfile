@@ -13,13 +13,16 @@ RUN cd frontend && npm run build
 # Stage 2: build the static Go binary (stdlib only, no CGO).
 FROM golang:1.26-alpine AS server
 WORKDIR /app
-COPY go.mod main.go ./
+COPY go.mod main.go logging.go ./
 COPY content/ content/
 COPY --from=frontend /app/frontend/build frontend/build
 RUN CGO_ENABLED=0 go build -o macuahuitl .
 
-# Stage 3: minimal runtime. The binary is fully static and makes no outbound
-# calls, so no shell or CA certificates are needed. Render injects PORT.
+# Stage 3: minimal runtime. The binary is fully static; its only outbound
+# calls are OTLP log exports to Grafana Cloud over HTTPS, so the CA bundle
+# (Alpine's ca-certificates, preinstalled in the golang image) is copied in
+# for TLS verification. No shell needed. Render injects PORT.
 FROM scratch
+COPY --from=server /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=server /app/macuahuitl /macuahuitl
 ENTRYPOINT ["/macuahuitl"]

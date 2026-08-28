@@ -4,7 +4,7 @@
 
 ## Layout
 
-- `main.go` — the entire Go server. Deliberately one file; no `cmd/`, `internal/`, or `pkg/` — the codebase is too small for layout ceremony.
+- `main.go` — routing and server lifecycle. `logging.go` — access logging and the OTLP exporter. Both are `package main` at the repo root; no `cmd/`, `internal/`, or `pkg/` — the codebase is too small for layout ceremony, and `go:embed` patterns can't reach parent dirs anyway.
 - `content/` — the Obsidian vault (`posts/`, `projects/`, `attachments/`, `templates/`). Markdown with YAML frontmatter, standard markdown links.
 - `frontend/` — SvelteKit app (Svelte 5, mdsvex, `adapter-static`). Build output goes to `frontend/build/`.
 - `frontend/static/robots.txt` — crawler policy (allow all), copied verbatim into `frontend/build/`.
@@ -36,8 +36,17 @@
 - **`/llms.txt` is build-generated, never hand-edited.** It comes from the same draft-filtered loaders (`$lib/data/posts`, `$lib/data/projects`) as the site, so vault changes regenerate it on the next deploy. `robots.txt` and `llms.txt` land in `frontend/build/` and are served by the Go file server — no Go routes involved.
 - No Go tests yet; verify behavior with the curl matrix (HTML, `.md` verbatim + content type, `Accept` negotiation, draft 404, attachment bytes, `/robots.txt`, `/llms.txt`, `/api/health`).
 
+## Observability
+
+- **Access logs, not traces.** The goal is usage insight (HTML vs markdown serving, agents vs humans), which is a per-request counting question — a log signal. One structured `slog` line per request always goes to local stdout (Render log retention is the fallback); when `OTEL_EXPORTER_OTLP_ENDPOINT` is set, the same records are batched to Grafana Cloud's OTLP gateway at `{endpoint}/v1/logs` (Loki).
+- **Hand-rolled OTLP/JSON on purpose.** The official OTel Go SDK would add ~16 modules, breaking the zero-deps hard rule for marginal benefit at this scale. The exporter (`logging.go`) reads the standard env vars Grafana issues: `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS` (`k=v,k=v`; values decoded with `url.PathUnescape` — `QueryUnescape` would corrupt `+` in the base64 Basic token), `OTEL_SERVICE_NAME` (default `macuahuitl`). Endpoint unset → exporter is nil, zero overhead.
+- **Log fields:** `method`, `route` (`r.Pattern`, e.g. `GET /posts/{slug}`), `path`, `status`, `duration_ms`, `bytes`, `type`, `user_agent`, `referer`, `ip` (first `X-Forwarded-For` hop). `type` is `markdown` | `html` | `attachment`: `serveMarkdown` marks `markdown` via a `*requestMeta` planted in the request context (even for draft/missing 404s — intent, with outcome in `status`); `/attachments/` prefix → `attachment`; everything else `html`.
+- **`/api/health` is never logged** — Render polls it constantly; pure noise.
+- Example Loki query: `sum by (type) (count_over_time({service_name="macuahuitl"} [1h]))`.
+- The Dockerfile copies `ca-certificates.crt` from the golang builder stage into scratch — Grafana's gateway is HTTPS and scratch has no roots. Graceful shutdown (SIGINT/SIGTERM) flushes buffered records on deploy.
+
 ## Deployment
 
-Render, via `Dockerfile` (node → golang → scratch, ~27 MB image) + `render.yaml` blueprint (starter plan, frankfurt, health check `/api/health`, auto-deploy on `main`). Publish flow: commit vault changes → push → auto-deploy.
+Render, via `Dockerfile` (node → golang → scratch, ~27 MB image) + `render.yaml` blueprint (starter plan, frankfurt, health check `/api/health`, auto-deploy on `main`). Publish flow: commit vault changes → push → auto-deploy. Grafana credentials are `sync: false` env vars in the blueprint — set `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_HEADERS` once in the Render dashboard.
 
 `llms.txt` generation rides the existing frontend build (`npm run build`) in every environment, so CI, the Dockerfile, and `render.yaml` need no special-casing for it.

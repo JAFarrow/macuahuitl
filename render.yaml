@@ -7,3 +7,13 @@ services:
     branch: main
     healthCheckPath: /api/health
     autoDeploy: true
+    envVars:
+      # Grafana Cloud OTLP gateway credentials (sync: false = set once in
+      # the Render dashboard, never committed). Unset endpoint = local logs
+      # only. See "Observability" in AGENTS.md.
+      - key: OTEL_EXPORTER_OTLP_ENDPOINT
+        sync: false
+      - key: OTEL_EXPORTER_OTLP_HEADERS
+        sync: false
+      - key: OTEL_SERVICE_NAME
+        value: macuahuitl

@@ -3,12 +3,16 @@
 package main
 
 import (
+	"context"
 	"embed"
+	"errors"
 	"io/fs"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -51,19 +55,41 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
+	exporter := newOTLPExporterFromEnv()
 	srv := &http.Server{
 		Addr:              ":" + port,
-		Handler:           mux,
+		Handler:           accessLog(exporter, mux),
 		ReadTimeout:       10 * time.Second,
 		ReadHeaderTimeout: 10 * time.Second,
 		WriteTimeout:      10 * time.Second,
-		IdleTimeout:       60 * time.Second,
+		IdleTimeout:      60 * time.Second,
 	}
+
+	// Render sends SIGTERM on deploy; shut down gracefully so buffered log
+	// records get flushed rather than dropped.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	shutdown := make(chan struct{})
+	go func() {
+		defer close(shutdown)
+		<-ctx.Done()
+		slog.Info("shutting down")
+		timeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := srv.Shutdown(timeout); err != nil {
+			slog.Error("server shutdown", "err", err)
+		}
+		if exporter != nil {
+			exporter.shutdown()
+		}
+	}()
+
 	slog.Info("listening", "addr", srv.Addr)
-	if err := srv.ListenAndServe(); err != nil {
+	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		slog.Error("server exited", "err", err)
 		os.Exit(1)
 	}
+	<-shutdown
 }
 
 func handleHealth(w http.ResponseWriter, _ *http.Request) {
@@ -113,6 +139,11 @@ func noListings(next http.Handler) http.Handler {
 }
 
 func serveMarkdown(w http.ResponseWriter, r *http.Request, content fs.FS, section, slug string) {
+	// Mark markdown intent for the access log even when the outcome is a
+	// 404 (draft or missing slug); the status field carries the outcome.
+	if meta, ok := r.Context().Value(metaCtxKey{}).(*requestMeta); ok {
+		meta.typ = "markdown"
+	}
 	if slug == "" || strings.Contains(slug, "/") || strings.Contains(slug, "..") {
 		http.NotFound(w, r)
 		return
