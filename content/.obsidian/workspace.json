@@ -11,14 +11,10 @@
             "id": "275e4c102460cb9f",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "projects/macuahuitl.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "macuahuitl"
+              "title": "New tab"
             }
           }
         ]
@@ -186,10 +182,12 @@
       "bases:Create new base": false
     }
   },
-  "active": "275e4c102460cb9f",
+  "active": "eef0724af8b5bf5b",
   "lastOpenFiles": [
-    "templates/project.md",
     "projects/macuahuitl.md",
+    "projects/Untitled.md",
+    "projects/Untitled",
+    "templates/project.md",
     "templates/post.md",
     "posts/test-post.md",
     "posts/draft-check.md",
@@ -197,7 +195,6 @@
     "projects/abandoned-widget.md",
     "projects/meal-planner.md",
     "projects/garden-cli.md",
-    "projects/Untitled.md",
     "Untitled.base",
     "templates",
     "attachments",
