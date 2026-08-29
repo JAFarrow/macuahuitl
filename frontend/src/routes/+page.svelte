@@ -1,15 +1,19 @@
 <script lang="ts">
+	import { about, About } from '$lib/data/about';
 	import { projects } from '$lib/data/projects';
+	import ContentPage from '$lib/components/ContentPage.svelte';
 	import PostList from '$lib/components/PostList.svelte';
 	import ProjectCard from '$lib/components/ProjectCard.svelte';
 </script>
 
 <svelte:head>
 	<title>Justin</title>
+	<link rel="alternate" type="text/markdown" href="/about.md" />
 </svelte:head>
 
-<h1>Justin</h1>
-<p>A personal site and digital garden. Notes here are perpetually unfinished.</p>
+<ContentPage title={about.title}>
+	<About />
+</ContentPage>
 
 <section>
 	<h2>Posts</h2>

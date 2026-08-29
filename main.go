@@ -49,6 +49,8 @@ func main() {
 	mux.Handle("GET /posts/{slug}/{$}", negotiateHandler(content, "posts", html))
 	mux.Handle("GET /projects/{slug}", sectionHandler(content, "projects", html))
 	mux.Handle("GET /projects/{slug}/{$}", negotiateHandler(content, "projects", html))
+	mux.HandleFunc("GET /about.md", aboutMarkdownHandler(content))
+	mux.Handle("GET /{$}", aboutNegotiateHandler(content, html))
 	mux.Handle("GET /", html)
 
 	port := os.Getenv("PORT")
@@ -156,6 +158,37 @@ func serveMarkdown(w http.ResponseWriter, r *http.Request, content fs.FS, sectio
 	w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
 	if _, err := w.Write(data); err != nil {
 		slog.Debug("write markdown response", "err", err)
+	}
+}
+
+func aboutMarkdownHandler(content fs.FS) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		serveAboutMarkdown(w, r, content)
+	}
+}
+
+func aboutNegotiateHandler(content fs.FS, html http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.Header.Get("Accept"), "text/markdown") {
+			serveAboutMarkdown(w, r, content)
+			return
+		}
+		html.ServeHTTP(w, r)
+	}
+}
+
+func serveAboutMarkdown(w http.ResponseWriter, r *http.Request, content fs.FS) {
+	if meta, ok := r.Context().Value(metaCtxKey{}).(*requestMeta); ok {
+		meta.typ = "markdown"
+	}
+	data, err := fs.ReadFile(content, "about.md")
+	if err != nil || isDraft(data) {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
+	if _, err := w.Write(data); err != nil {
+		slog.Debug("write about markdown response", "err", err)
 	}
 }
 

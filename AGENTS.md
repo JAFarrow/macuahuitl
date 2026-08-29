@@ -5,7 +5,7 @@
 ## Layout
 
 - `main.go` — routing and server lifecycle. `logging.go` — access logging and the OTLP exporter. Both are `package main` at the repo root; no `cmd/`, `internal/`, or `pkg/` — the codebase is too small for layout ceremony, and `go:embed` patterns can't reach parent dirs anyway.
-- `content/` — the Obsidian vault (`posts/`, `projects/`, `attachments/`, `templates/`). Markdown with YAML frontmatter, standard markdown links.
+- `content/` — the Obsidian vault (`posts/`, `projects/`, `attachments/`, `templates/`, plus `about.md` for the home page). Markdown with YAML frontmatter, standard markdown links.
 - `frontend/` — SvelteKit app (Svelte 5, mdsvex, `adapter-static`). Build output goes to `frontend/build/`.
 - `frontend/static/robots.txt` — crawler policy (allow all), copied verbatim into `frontend/build/`.
 - `frontend/src/routes/llms.txt/+server.ts` — prerendered endpoint that generates `build/llms.txt` from the vault data loaders.
@@ -25,18 +25,18 @@
 - **`//go:embed all:frontend/build all:content` needs `frontend/build/` on disk**, but it's gitignored — always build the frontend before `go build` (CI and the Dockerfile already do).
 - **Serve markdown verbatim.** No frontmatter stripping, no link rewriting.
 - **Drafts are private.** `draft: true` frontmatter → 404 everywhere (the `.md` route, the `Accept: text/markdown` path, and HTML — the frontend never prerenders drafts).
-- **Don't expose the vault beyond `posts/`, `projects/`, `attachments/`.** `.obsidian/` and `templates/` are embedded but must stay unreachable. Attachment serving stays confined to its `fs.Sub` (encoded `..%2F` traversal must 404), and directory listings are 404ed (`noListings`).
+- **Don't expose the vault beyond `posts/`, `projects/`, `attachments/`, and `about.md`.** `.obsidian/` and `templates/` are embedded but must stay unreachable. Attachment serving stays confined to its `fs.Sub` (encoded `..%2F` traversal must 404), and directory listings are 404ed (`noListings`).
 
 ## Conventions & gotchas
 
 - **Canonical origin is `https://www.justin-farrow-dev.com`** — Cloudflare 301s apex → www at the edge. There is no Go-side host redirect: `macuahuitl.onrender.com` and direct-origin apex hits are served as-is. Hardcoded in two places — the sitemap `SITE_URL` constant and the `robots.txt` `Sitemap:` line; change them together if it ever moves.
 - **`trailingSlash: 'always'` is load-bearing.** Routes prerender as `route/index.html` so `http.FileServerFS` resolves everything; slash-less URLs 301 to the slash form. Don't revert without adding Go-side `.html` mapping.
 - **No mid-segment wildcards in `http.ServeMux`** (`"/posts/{slug}.md"` panics at startup). That's why one `sectionHandler` per section dispatches on `.md` suffix and `Accept` header.
-- **Markdown negotiation works on both URL forms** — slash-less (`/posts/x`, also the only place a `.md` suffix is recognized) and canonical trailing-slash (`/posts/x/` via `{$}`-anchored patterns). Agents should prefer the explicit `.md` URLs anyway.
+- **Markdown negotiation works on both URL forms** — slash-less (`/posts/x`, also the only place a `.md` suffix is recognized) and canonical trailing-slash (`/posts/x/` via `{$}`-anchored patterns). The home page follows the same pattern: `/about.md` serves `content/about.md`, and `Accept: text/markdown` on `/` does too. Agents should prefer the explicit `.md` URLs anyway.
 - **Draft check is a frontmatter line-prefix scan**, not a YAML parse — keep it that way.
-- **The vite build reads `content/` directly** (`import.meta.glob` over `../../../../content/posts/*.md` and `../../../../content/projects/*.md` in the `$lib/data` loaders), so any build environment (CI, Docker) needs both directories side by side.
-- **`/llms.txt` and `/sitemap.xml` are build-generated, never hand-edited.** They come from the same draft-filtered loaders (`$lib/data/posts`, `$lib/data/projects`) as the site, so vault changes regenerate them on the next deploy. `robots.txt`, `llms.txt`, and `sitemap.xml` land in `frontend/build/` and are served by the Go file server — no Go routes involved.
-- No Go tests yet; verify behavior with the curl matrix (HTML, `.md` verbatim + content type, `Accept` negotiation, draft 404, attachment bytes, `/robots.txt`, `/llms.txt`, `/sitemap.xml`, `/api/health`).
+- **The vite build reads `content/` directly** (`import.meta.glob` over `../../../../content/posts/*.md`, `../../../../content/projects/*.md`, and `../../../../content/about.md` in the `$lib/data` loaders), so any build environment (CI, Docker) needs both directories side by side.
+- **`/llms.txt` and `/sitemap.xml` are build-generated, never hand-edited.** They come from the same loaders (`$lib/data/posts`, `$lib/data/projects`, `$lib/data/about`) as the site, so vault changes regenerate them on the next deploy. `robots.txt`, `llms.txt`, and `sitemap.xml` land in `frontend/build/` and are served by the Go file server — no Go routes involved.
+- No Go tests yet; verify behavior with the curl matrix (HTML, `.md` verbatim + content type, `Accept` negotiation on `/posts/x/`, `/projects/x/`, and `/`, draft 404, attachment bytes, `/robots.txt`, `/llms.txt`, `/sitemap.xml`, `/api/health`).
 
 ## Observability
 
