@@ -43,7 +43,6 @@
 - The favicon is a minimal, left-slanted macuahuitl glyph: `frontend/static/favicon.svg`.
 - The obsidian blades use the brand accent colour from `frontend/src/app.css`: `#0645ad` in light mode and `#7cb3ff` in dark mode, switched via `prefers-color-scheme` inside the SVG.
 - The club/paddle is neutral (`#1c1c1c` in light mode, `#e4e4e4` in dark mode), matching `--fg`.
-- `frontend/static/favicon.ico` is a static fallback for browsers that don't support SVG favicons.
 
 ## Observability
 
