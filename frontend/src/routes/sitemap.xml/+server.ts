@@ -1,6 +1,7 @@
 import { about } from '$lib/data/about';
 import { posts } from '$lib/data/posts';
 import { projects } from '$lib/data/projects';
+import { SITE_URL } from '$lib/site';
 import type { RequestHandler } from './$types';
 
 // Prerendered to build/sitemap.xml at `npm run build` time and served by the
@@ -8,16 +9,21 @@ import type { RequestHandler } from './$types';
 // draft-filtered data loaders as the site, so drafts never appear here either.
 export const prerender = true;
 
-// Canonical origin of the deployed site; sitemap URLs must be absolute.
-const SITE_URL = 'https://www.justin-farrow-dev.com';
+// Dates are normalized to YYYY-MM-DD by the loaders, so lexicographic max
+// is a correct date max.
+const latest = (items: { created: string; modified?: string }[]): string | undefined =>
+	items.reduce<string | undefined>((max, i) => {
+		const d = i.modified ?? i.created;
+		return max === undefined || d > max ? d : max;
+	}, undefined);
 
 // Sitemap URLs use the canonical trailing-slash form; the slash-less URLs
 // 301 to these.
 export const GET: RequestHandler = () => {
 	const urls: { loc: string; lastmod?: string }[] = [
 		{ loc: '/', lastmod: about.modified },
-		{ loc: '/posts/' },
-		{ loc: '/projects/' },
+		{ loc: '/posts/', lastmod: latest(posts) },
+		{ loc: '/projects/', lastmod: latest(projects) },
 		...posts.map((post) => ({ loc: `/posts/${post.slug}/`, lastmod: post.modified ?? post.created })),
 		...projects.map((project) => ({ loc: `/projects/${project.slug}/`, lastmod: project.modified ?? project.created }))
 	];

@@ -5,6 +5,7 @@
 
 <svelte:head>
 	<title>Projects — Justin</title>
+	<link rel="alternate" type="text/markdown" href="/projects.md" />
 </svelte:head>
 
 <h1>Projects</h1>

@@ -38,6 +38,14 @@ func main() {
 
 	html := http.FileServerFS(build)
 
+	// Markdown sources: vault documents by section slug, and fixed files
+	// (build-generated index twins plus the vault about page).
+	post := slugMarkdown(content, "posts")
+	project := slugMarkdown(content, "projects")
+	postsIdx := fixedMarkdown(build, "posts.md")
+	projectsIdx := fixedMarkdown(build, "projects.md")
+	about := fixedMarkdown(content, "about.md")
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/health", handleHealth)
 	// Vault attachments (images etc.); the frontend rewrites Obsidian bare
@@ -45,12 +53,16 @@ func main() {
 	// to the attachments directory (no ../ escapes into the rest of the vault),
 	// and directory listings are 404ed rather than rendered.
 	mux.Handle("GET /attachments/", noListings(http.StripPrefix("/attachments/", http.FileServerFS(attachments))))
-	mux.Handle("GET /posts/{slug}", sectionHandler(content, "posts", html))
-	mux.Handle("GET /posts/{slug}/{$}", negotiateHandler(content, "posts", html))
-	mux.Handle("GET /projects/{slug}", sectionHandler(content, "projects", html))
-	mux.Handle("GET /projects/{slug}/{$}", negotiateHandler(content, "projects", html))
-	mux.HandleFunc("GET /about.md", aboutMarkdownHandler(content))
-	mux.Handle("GET /{$}", aboutNegotiateHandler(content, html))
+	mux.Handle("GET /posts/{slug}", sectionHandler(post, html))
+	mux.Handle("GET /posts/{slug}/{$}", onAccept(post, html))
+	mux.Handle("GET /projects/{slug}", sectionHandler(project, html))
+	mux.Handle("GET /projects/{slug}/{$}", onAccept(project, html))
+	mux.HandleFunc("GET /posts.md", postsIdx)
+	mux.HandleFunc("GET /projects.md", projectsIdx)
+	mux.Handle("GET /posts/{$}", onAccept(postsIdx, html))
+	mux.Handle("GET /projects/{$}", onAccept(projectsIdx, html))
+	mux.HandleFunc("GET /about.md", about)
+	mux.Handle("GET /{$}", onAccept(about, html))
 	mux.Handle("GET /", html)
 
 	port := os.Getenv("PORT")
@@ -101,30 +113,75 @@ func handleHealth(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-// sectionHandler serves one vault section (posts or projects) at slash-less
-// URLs. A slug ending in .md, or an Accept header containing text/markdown,
-// gets the raw markdown; anything else falls through to the prerendered HTML.
-func sectionHandler(content fs.FS, section string, html http.Handler) http.HandlerFunc {
-	negotiate := negotiateHandler(content, section, html)
+// sectionHandler serves a vault section at slash-less URLs: a slug ending in
+// .md, or an Accept header containing text/markdown, gets the raw markdown;
+// anything else falls through to the prerendered HTML.
+func sectionHandler(md http.Handler, html http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if slug, ok := strings.CutSuffix(r.PathValue("slug"), ".md"); ok {
-			serveMarkdown(w, r, content, section, slug)
-			return
-		}
-		negotiate.ServeHTTP(w, r)
-	}
-}
-
-// negotiateHandler serves a section page at its canonical trailing-slash URL:
-// Accept containing text/markdown gets the raw markdown (same draft, slug
-// validation, and 404 semantics as the .md route), anything else gets HTML.
-func negotiateHandler(content fs.FS, section string, html http.Handler) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if strings.Contains(r.Header.Get("Accept"), "text/markdown") {
-			serveMarkdown(w, r, content, section, r.PathValue("slug"))
+		if strings.HasSuffix(r.PathValue("slug"), ".md") || acceptsMarkdown(r) {
+			md.ServeHTTP(w, r)
 			return
 		}
 		html.ServeHTTP(w, r)
+	}
+}
+
+// onAccept serves md when the request's Accept header contains text/markdown,
+// otherwise html.
+func onAccept(md http.Handler, html http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if acceptsMarkdown(r) {
+			md.ServeHTTP(w, r)
+			return
+		}
+		html.ServeHTTP(w, r)
+	}
+}
+
+func acceptsMarkdown(r *http.Request) bool {
+	return strings.Contains(r.Header.Get("Accept"), "text/markdown")
+}
+
+// slugMarkdown returns a handler that serves one vault document:
+// content/<section>/<slug>.md. It validates the slug (defense in depth against
+// traversal) and runs the draft check.
+func slugMarkdown(content fs.FS, section string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Mark markdown intent for the access log even when the outcome is a
+		// 404 (draft, missing, or invalid slug); the status field carries the outcome.
+		if meta, ok := r.Context().Value(metaCtxKey{}).(*requestMeta); ok {
+			meta.typ = "markdown"
+		}
+		slug := strings.TrimSuffix(r.PathValue("slug"), ".md")
+		if slug == "" || strings.Contains(slug, "/") || strings.Contains(slug, "..") {
+			http.NotFound(w, r)
+			return
+		}
+		serveMarkdownFile(w, r, content, section+"/"+slug+".md")
+	}
+}
+
+// fixedMarkdown returns a handler that serves one markdown file from fsys.
+// The file is draft-checked too, but that is a no-op for frontmatter-less
+// generated files and keeps behavior uniform when fsys points back at the vault.
+func fixedMarkdown(fsys fs.FS, path string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		serveMarkdownFile(w, r, fsys, path)
+	}
+}
+
+func serveMarkdownFile(w http.ResponseWriter, r *http.Request, fsys fs.FS, path string) {
+	if meta, ok := r.Context().Value(metaCtxKey{}).(*requestMeta); ok {
+		meta.typ = "markdown"
+	}
+	data, err := fs.ReadFile(fsys, path)
+	if err != nil || isDraft(data) {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
+	if _, err := w.Write(data); err != nil {
+		slog.Debug("write markdown response", "err", err)
 	}
 }
 
@@ -138,58 +195,6 @@ func noListings(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
-}
-
-func serveMarkdown(w http.ResponseWriter, r *http.Request, content fs.FS, section, slug string) {
-	// Mark markdown intent for the access log even when the outcome is a
-	// 404 (draft or missing slug); the status field carries the outcome.
-	if meta, ok := r.Context().Value(metaCtxKey{}).(*requestMeta); ok {
-		meta.typ = "markdown"
-	}
-	if slug == "" || strings.Contains(slug, "/") || strings.Contains(slug, "..") {
-		http.NotFound(w, r)
-		return
-	}
-	data, err := fs.ReadFile(content, section+"/"+slug+".md")
-	if err != nil || isDraft(data) {
-		http.NotFound(w, r)
-		return
-	}
-	w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
-	if _, err := w.Write(data); err != nil {
-		slog.Debug("write markdown response", "err", err)
-	}
-}
-
-func aboutMarkdownHandler(content fs.FS) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		serveAboutMarkdown(w, r, content)
-	}
-}
-
-func aboutNegotiateHandler(content fs.FS, html http.Handler) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if strings.Contains(r.Header.Get("Accept"), "text/markdown") {
-			serveAboutMarkdown(w, r, content)
-			return
-		}
-		html.ServeHTTP(w, r)
-	}
-}
-
-func serveAboutMarkdown(w http.ResponseWriter, r *http.Request, content fs.FS) {
-	if meta, ok := r.Context().Value(metaCtxKey{}).(*requestMeta); ok {
-		meta.typ = "markdown"
-	}
-	data, err := fs.ReadFile(content, "about.md")
-	if err != nil || isDraft(data) {
-		http.NotFound(w, r)
-		return
-	}
-	w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
-	if _, err := w.Write(data); err != nil {
-		slog.Debug("write about markdown response", "err", err)
-	}
 }
 
 // isDraft reports whether the document's YAML frontmatter sets draft: true.
