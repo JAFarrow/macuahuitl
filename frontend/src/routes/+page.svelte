@@ -16,12 +16,12 @@
 </ContentPage>
 
 <section>
-	<h2>Posts</h2>
+	<h1>Posts</h1>
 	<PostList />
 </section>
 
 <section>
-	<h2>Projects</h2>
+	<h1>Projects</h1>
 	<div class="card-grid">
 		{#each projects as project (project.slug)}
 			<ProjectCard {project} />

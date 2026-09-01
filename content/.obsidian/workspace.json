@@ -11,10 +11,14 @@
             "id": "275e4c102460cb9f",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "about.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "about"
             }
           }
         ]
@@ -182,20 +186,25 @@
       "bases:Create new base": false
     }
   },
-  "active": "eef0724af8b5bf5b",
+  "active": "275e4c102460cb9f",
   "lastOpenFiles": [
-    "projects/macuahuitl.md",
-    "projects/Untitled.md",
-    "projects/Untitled",
-    "templates/project.md",
-    "templates/post.md",
     "posts/test-post.md",
+    "projects/quantic-rag-project.md",
+    "projects/quantic-ml-project.md",
+    "projects/macuahuitl.md",
+    "projects/envlock.md",
+    "about.md",
+    "projects/Untitled.md",
+    "templates/post.md",
+    "templates/project.md",
+    "projects/test-project-1.md",
+    "Untitled.base",
+    "projects/Untitled",
     "posts/draft-check.md",
     "attachments/40k.png",
     "projects/abandoned-widget.md",
     "projects/meal-planner.md",
     "projects/garden-cli.md",
-    "Untitled.base",
     "templates",
     "attachments",
     "projects",

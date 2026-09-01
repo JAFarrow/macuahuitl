@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <style>
+    .club { fill: #1c1c1c; }
+    .blade { fill: #0645ad; }
+    @media (prefers-color-scheme: dark) {
+      .club { fill: #e4e4e4; }
+      .blade { fill: #7cb3ff; }
+    }
+  </style>
+  <g transform="rotate(-15, 50, 50)">
+    <path class="club" d="M48 8 L52 8 L56 12 L56 88 L52 92 L48 92 L44 88 L44 12 Z" />
+    <path class="blade" d="M56 22 L66 23 L66 27 L56 28 Z M56 42 L66 43 L66 47 L56 48 Z M56 62 L66 63 L66 67 L56 68 Z M44 32 L34 33 L34 37 L44 38 Z M44 52 L34 53 L34 57 L44 58 Z M44 72 L34 73 L34 77 L44 78 Z" />
+  </g>
+</svg>

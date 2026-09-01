@@ -1,6 +1,7 @@
 ---
 title:
 created: "{{date}}"
+modified: "{{date}}"
 tags: []
 summary:
 draft: true

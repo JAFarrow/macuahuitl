@@ -3,6 +3,7 @@ import type { Component } from 'svelte';
 export interface PostMetadata {
 	title: string;
 	created: string;
+	modified?: string;
 	tags: string[];
 	summary: string;
 	status: string;
@@ -33,9 +34,10 @@ function toDateString(created: string): string {
 
 export const posts: Post[] = Object.entries(modules)
 	.map(([path, mod]) => ({
-		slug: slugFromPath(path),
-		...mod.metadata,
-		created: toDateString(mod.metadata.created)
+			slug: slugFromPath(path),
+			...mod.metadata,
+			created: toDateString(mod.metadata.created),
+			modified: mod.metadata.modified ? toDateString(mod.metadata.modified) : undefined
 	}))
 	.filter((post) => !post.draft)
 	.sort((a, b) => b.created.localeCompare(a.created));

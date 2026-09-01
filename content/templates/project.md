@@ -7,6 +7,7 @@ repo:
 link:
 draft: true
 created: "{{date}}"
+modified: "{{date}}"
 ---
 
 ## What

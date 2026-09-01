@@ -7,10 +7,10 @@ tech:
   - SvelteKit
 summary: Obsidian vault in, single Go binary out. HTML for humans, markdown for agents.
 repo: https://github.com/JAFarrow/macuahuitl
-link: https://macuahuitl.onrender.com/
+link: https://justin-farrow-dev.com
 draft: false
+modified: 2026-09-01
 ---
-
 ## What
 
 ## Why

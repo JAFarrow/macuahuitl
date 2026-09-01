@@ -9,7 +9,7 @@
 - `frontend/` — SvelteKit app (Svelte 5, mdsvex, `adapter-static`). Build output goes to `frontend/build/`.
 - `frontend/static/robots.txt` — crawler policy (allow all), copied verbatim into `frontend/build/`.
 - `frontend/src/routes/llms.txt/+server.ts` — prerendered endpoint that generates `build/llms.txt` from the vault data loaders.
-- `frontend/src/routes/sitemap.xml/+server.ts` — prerendered endpoint that generates `build/sitemap.xml` (home, section indexes, all non-draft posts/projects at their canonical trailing-slash URLs). The `SITE_URL` constant in that file is the canonical origin.
+- `frontend/src/routes/sitemap.xml/+server.ts` — prerendered endpoint that generates `build/sitemap.xml` (home, section indexes, all non-draft posts/projects at their canonical trailing-slash URLs). `lastmod` is taken from a `modified` frontmatter key (falling back to `created` for posts/projects), and from `about.md`'s `modified` for the home page. The `SITE_URL` constant in that file is the canonical origin.
 - `justfile`, `.github/workflows/go.yml`, `Dockerfile`, `render.yaml` — tooling, CI, and Render deployment.
 
 ## Commands
@@ -37,6 +37,13 @@
 - **The vite build reads `content/` directly** (`import.meta.glob` over `../../../../content/posts/*.md`, `../../../../content/projects/*.md`, and `../../../../content/about.md` in the `$lib/data` loaders), so any build environment (CI, Docker) needs both directories side by side.
 - **`/llms.txt` and `/sitemap.xml` are build-generated, never hand-edited.** They come from the same loaders (`$lib/data/posts`, `$lib/data/projects`, `$lib/data/about`) as the site, so vault changes regenerate them on the next deploy. `robots.txt`, `llms.txt`, and `sitemap.xml` land in `frontend/build/` and are served by the Go file server — no Go routes involved.
 - No Go tests yet; verify behavior with the curl matrix (HTML, `.md` verbatim + content type, `Accept` negotiation on `/posts/x/`, `/projects/x/`, and `/`, draft 404, attachment bytes, `/robots.txt`, `/llms.txt`, `/sitemap.xml`, `/api/health`).
+
+## Favicon / brand colour
+
+- The favicon is a minimal, left-slanted macuahuitl glyph: `frontend/static/favicon.svg`.
+- The obsidian blades use the brand accent colour from `frontend/src/app.css`: `#0645ad` in light mode and `#7cb3ff` in dark mode, switched via `prefers-color-scheme` inside the SVG.
+- The club/paddle is neutral (`#1c1c1c` in light mode, `#e4e4e4` in dark mode), matching `--fg`.
+- `frontend/static/favicon.ico` is a static fallback for browsers that don't support SVG favicons.
 
 ## Observability
 

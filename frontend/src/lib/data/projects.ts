@@ -5,6 +5,7 @@ export type ProjectStatus = 'seedling' | 'budding' | 'evergreen' | 'archived';
 export interface ProjectMetadata {
 	title: string;
 	created: string;
+	modified?: string;
 	status: ProjectStatus;
 	tech: string[];
 	summary: string;
@@ -37,9 +38,10 @@ function toDateString(created: string): string {
 
 export const projects: Project[] = Object.entries(modules)
 	.map(([path, mod]) => ({
-		slug: slugFromPath(path),
-		...mod.metadata,
-		created: toDateString(mod.metadata.created)
+			slug: slugFromPath(path),
+			...mod.metadata,
+			created: toDateString(mod.metadata.created),
+			modified: mod.metadata.modified ? toDateString(mod.metadata.modified) : undefined
 	}))
 	.filter((project) => !project.draft)
 	.sort((a, b) => b.created.localeCompare(a.created));

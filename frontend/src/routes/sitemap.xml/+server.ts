@@ -1,3 +1,4 @@
+import { about } from '$lib/data/about';
 import { posts } from '$lib/data/posts';
 import { projects } from '$lib/data/projects';
 import type { RequestHandler } from './$types';
@@ -14,11 +15,11 @@ const SITE_URL = 'https://www.justin-farrow-dev.com';
 // 301 to these.
 export const GET: RequestHandler = () => {
 	const urls: { loc: string; lastmod?: string }[] = [
-		{ loc: '/' },
+		{ loc: '/', lastmod: about.modified },
 		{ loc: '/posts/' },
 		{ loc: '/projects/' },
-		...posts.map((post) => ({ loc: `/posts/${post.slug}/`, lastmod: post.created })),
-		...projects.map((project) => ({ loc: `/projects/${project.slug}/`, lastmod: project.created }))
+		...posts.map((post) => ({ loc: `/posts/${post.slug}/`, lastmod: post.modified ?? post.created })),
+		...projects.map((project) => ({ loc: `/projects/${project.slug}/`, lastmod: project.modified ?? project.created }))
 	];
 	const entries = urls
 		.map(
