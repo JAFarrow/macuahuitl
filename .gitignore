@@ -36,3 +36,6 @@ go.work.sum
 node_modules/
 frontend/build/
 .svelte-kit/
+
+#dot files
+/content/.obsidian
