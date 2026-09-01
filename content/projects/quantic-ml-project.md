@@ -14,6 +14,8 @@ modified: 2026-09-01
 ## What
 Classifies Windows PE (executable) metadata as malware or clearware. A Flask API serves a tuned XGBoost model (batch JSON + CSV-upload endpoints); a small React frontend handles manual row entry and CSV upload with per-row verdicts.
 
+![Screenshot demonstrating the frontend view of the rag chatbot in use](ml_project.webp)
+
 ## Why
 Quantic coursework, taken as an excuse to run the full ML lifecycle properly: dataset → feature engineering → model selection → tuning → deployed, test-covered inference API.
 

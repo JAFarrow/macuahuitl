@@ -96,6 +96,29 @@ a {
 	padding: 0;
 }
 
+.prose table {
+	width: 80%;
+	margin: 0 auto;
+	border-collapse: collapse;
+}
+
+.prose th,
+.prose td {
+	padding: 0.4em 0.75em;
+	text-align: center;
+	border: .5px solid var(--muted);
+}
+
+.prose th[align='center'],
+.prose td[align='center'] {
+	text-align: center;
+}
+
+.prose th[align='right'],
+.prose td[align='right'] {
+	text-align: right;
+}
+
 .card-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

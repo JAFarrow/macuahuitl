@@ -1,6 +1,6 @@
 import type { Component } from 'svelte';
 
-export type ProjectStatus = 'seedling' | 'budding' | 'evergreen' | 'archived';
+export type ProjectStatus = 'seedling' | 'fruited' | 'evergreen' | 'archived';
 
 export interface ProjectMetadata {
 	title: string;

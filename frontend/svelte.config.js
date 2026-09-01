@@ -16,12 +16,27 @@ function remarkAttachments() {
 	};
 }
 
+// Open external links (and mailto/tel) in a new tab.
+function remarkExternalLinks() {
+	return (tree) => {
+		(function visit(node) {
+			if (node.type === 'link' && node.url && /^(?:https?:|mailto:|tel:|\/\/)/i.test(node.url)) {
+				node.data ||= {};
+				node.data.hProperties ||= {};
+				node.data.hProperties.target = '_blank';
+				node.data.hProperties.rel = 'noopener noreferrer';
+			}
+			node.children?.forEach(visit);
+		})(tree);
+	};
+}
+
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
 	extensions: ['.svelte', '.md'],
 	preprocess: [
 		vitePreprocess(),
-		mdsvex({ extensions: ['.md'], remarkPlugins: [remarkAttachments] })
+		mdsvex({ extensions: ['.md'], remarkPlugins: [remarkAttachments, remarkExternalLinks] })
 	],
 	kit: {
 		adapter: adapter(),
