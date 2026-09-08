@@ -42,7 +42,7 @@ const config = {
 		adapter: adapter(),
 		prerender: {
 			handleHttpError: ({ status, path, referrer, referenceType }) => {
-				// Raw markdown at /posts/*.md and /projects/*.md, and files under
+				// Raw markdown at /projects/*.md and /cv/*.md, and files under
 				// /attachments/, will be served by the Go server, not the frontend -
 				// so 404s on those paths are expected.
 				// trailingSlash: 'always' makes the prerenderer report *.md URLs with a

@@ -40,10 +40,10 @@ func main() {
 
 	// Markdown sources: vault documents by section slug, and fixed files
 	// (build-generated index twins plus the vault about page).
-	post := slugMarkdown(content, "posts")
 	project := slugMarkdown(content, "projects")
-	postsIdx := fixedMarkdown(build, "posts.md")
+	cvEntry := slugMarkdown(content, "cv")
 	projectsIdx := fixedMarkdown(build, "projects.md")
+	cvIdx := fixedMarkdown(build, "cv.md")
 	about := fixedMarkdown(content, "about.md")
 
 	mux := http.NewServeMux()
@@ -53,14 +53,14 @@ func main() {
 	// to the attachments directory (no ../ escapes into the rest of the vault),
 	// and directory listings are 404ed rather than rendered.
 	mux.Handle("GET /attachments/", noListings(http.StripPrefix("/attachments/", http.FileServerFS(attachments))))
-	mux.Handle("GET /posts/{slug}", sectionHandler(post, html))
-	mux.Handle("GET /posts/{slug}/{$}", onAccept(post, html))
 	mux.Handle("GET /projects/{slug}", sectionHandler(project, html))
 	mux.Handle("GET /projects/{slug}/{$}", onAccept(project, html))
-	mux.HandleFunc("GET /posts.md", postsIdx)
+	mux.Handle("GET /cv/{slug}", sectionHandler(cvEntry, html))
+	mux.Handle("GET /cv/{slug}/{$}", onAccept(cvEntry, html))
 	mux.HandleFunc("GET /projects.md", projectsIdx)
-	mux.Handle("GET /posts/{$}", onAccept(postsIdx, html))
+	mux.HandleFunc("GET /cv.md", cvIdx)
 	mux.Handle("GET /projects/{$}", onAccept(projectsIdx, html))
+	mux.Handle("GET /cv/{$}", onAccept(cvIdx, html))
 	mux.HandleFunc("GET /about.md", about)
 	mux.Handle("GET /{$}", onAccept(about, html))
 	mux.Handle("GET /", html)

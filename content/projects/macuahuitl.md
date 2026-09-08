@@ -9,7 +9,7 @@ summary: Obsidian vault in, single Go binary out. HTML for humans, markdown for 
 repo: https://github.com/JAFarrow/macuahuitl
 link: https://justin-farrow-dev.com
 draft: false
-modified: 2026-09-01
+modified: 2026-09-08
 ---
 ## What
 This site. An Obsidian vault is embedded into a single Go binary that serves prerendered HTML to humans and the raw markdown verbatim to agents (`.md` URLs or `Accept: text/markdown`).
@@ -19,7 +19,7 @@ The vault is where I already write — it should be the source of truth, not an 
 
 ## How
 - Go stdlib only, zero third-party deps; SvelteKit (`adapter-static`) build + vault embedded via `go:embed`; ~16 MB scratch image on Render.
-- Draft frontmatter → 404 everywhere; serving confined to `posts/`, `projects/`, `attachments/`, `about.md`.
+- Draft frontmatter → 404 everywhere; serving confined to `projects/`, `cv/`, `attachments/`, `about.md`.
 - Hand-rolled OTLP/JSON access-log exporter to Grafana Cloud (the official OTel SDK would cost ~16 modules); one structured `slog` line per request, typed markdown/html/attachment.
 
 ## Status / Learnings

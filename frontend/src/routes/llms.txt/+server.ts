@@ -1,6 +1,6 @@
 import { text } from '@sveltejs/kit';
 import { about } from '$lib/data/about';
-import { posts } from '$lib/data/posts';
+import { cvEntries } from '$lib/data/cv';
 import { projects } from '$lib/data/projects';
 import { SITE_URL } from '$lib/site';
 import type { RequestHandler } from './$types';
@@ -22,18 +22,24 @@ export const GET: RequestHandler = () => {
 		'',
 		'> A personal site and digital garden.',
 		'',
-		'Every post and project is available as raw markdown: append `.md` to the slash-less',
-		`URL (e.g. \`${SITE_URL}/posts/example.md\`), or send \`Accept: text/markdown\` to any`,
-		'post or project URL. The home page is available at',
-		`\`${SITE_URL}/about.md\`, the section indexes at \`${SITE_URL}/posts.md\` and`,
-		`\`${SITE_URL}/projects.md\`, and all of these URLs also respond to`,
-		'`Accept: text/markdown`. Drafts are never served.'
+		'Every project and CV entry is available as raw markdown: append `.md` to the',
+		`slash-less URL (e.g. \`${SITE_URL}/projects/example.md\`), or send \`Accept: text/markdown\``,
+		'to any project or CV entry URL. The home page is available at',
+		`\`${SITE_URL}/about.md\`, the section index at \`${SITE_URL}/projects.md\`,`,
+		`the CV stitched into one document at \`${SITE_URL}/cv.md\`,`,
+		'and all of these URLs also respond to `Accept: text/markdown`. Drafts are never served.'
 	];
 	const sections: [heading: string, prefix: string, entries: Entry[]][] = [
-		['Posts', 'posts', posts],
 		['Projects', 'projects', projects]
 	];
 	lines.push('', '## About', '', `- [${about.title}](${SITE_URL}/about.md): ${about.summary}`);
+	lines.push(
+		'',
+		'## CV',
+		'',
+		`- [CV](${SITE_URL}/cv.md): the whole CV stitched into one markdown document.`,
+		...cvEntries.map((entry) => `- [${entry.title}](${SITE_URL}/cv/${entry.slug}.md): ${entry.summary}`)
+	);
 	for (const [heading, prefix, entries] of sections) {
 		if (entries.length === 0) continue;
 		lines.push('', `## ${heading}`, '');

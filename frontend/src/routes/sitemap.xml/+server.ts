@@ -1,5 +1,5 @@
 import { about } from '$lib/data/about';
-import { posts } from '$lib/data/posts';
+import { cvEntries } from '$lib/data/cv';
 import { projects } from '$lib/data/projects';
 import { SITE_URL } from '$lib/site';
 import type { RequestHandler } from './$types';
@@ -22,10 +22,10 @@ const latest = (items: { created: string; modified?: string }[]): string | undef
 export const GET: RequestHandler = () => {
 	const urls: { loc: string; lastmod?: string }[] = [
 		{ loc: '/', lastmod: about.modified },
-		{ loc: '/posts/', lastmod: latest(posts) },
 		{ loc: '/projects/', lastmod: latest(projects) },
-		...posts.map((post) => ({ loc: `/posts/${post.slug}/`, lastmod: post.modified ?? post.created })),
-		...projects.map((project) => ({ loc: `/projects/${project.slug}/`, lastmod: project.modified ?? project.created }))
+		{ loc: '/cv/', lastmod: latest(cvEntries) },
+		...projects.map((project) => ({ loc: `/projects/${project.slug}/`, lastmod: project.modified ?? project.created })),
+		...cvEntries.map((entry) => ({ loc: `/cv/${entry.slug}/`, lastmod: entry.modified ?? entry.created }))
 	];
 	const entries = urls
 		.map(

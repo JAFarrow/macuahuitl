@@ -10,18 +10,14 @@
 		<a class="site-title" href="/">Justin</a>
 		<nav>
 			<a href="/">Home</a>
-			<a href="/posts">Posts</a>
 			<a href="/projects">Projects</a>
+			<a href="/cv">CV</a>
 		</nav>
 	</header>
 
 	<main>
 		{@render children()}
 	</main>
-
-	<footer>
-		<p>Justin</p>
-	</footer>
 </div>
 
 <style>
@@ -46,11 +42,5 @@
 
 	nav a {
 		margin-left: 1rem;
-	}
-
-	footer {
-		margin-top: 3rem;
-		color: var(--muted);
-		font-size: 0.875em;
 	}
 </style>

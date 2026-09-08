@@ -9,12 +9,10 @@ repo: https://github.com/JAFarrow/quantic_ml_project
 link: https://quantic-ml-frontend.vercel.app/
 draft: false
 created: 2026-02-15
-modified: 2026-09-01
+modified: 2026-09-07
 ---
 ## What
 Classifies Windows PE (executable) metadata as malware or clearware. A Flask API serves a tuned XGBoost model (batch JSON + CSV-upload endpoints); a small React frontend handles manual row entry and CSV upload with per-row verdicts.
-
-![Screenshot demonstrating the frontend view of the rag chatbot in use](ml_project.webp)
 
 ## Why
 Quantic coursework, taken as an excuse to run the full ML lifecycle properly: dataset → feature engineering → model selection → tuning → deployed, test-covered inference API.

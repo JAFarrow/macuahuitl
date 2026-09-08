@@ -10,12 +10,10 @@ repo: https://github.com/JAFarrow/quantic_rag_project
 link: https://quantic-rag-project.onrender.com
 draft: false
 created: 2026-04-01
-modified: 2026-09-01
+modified: 2026-09-07
 ---
 ## What
 RAG chatbot over a fictional company's HR policy PDFs, with citation-grounded answers. FastAPI + LangChain + Pinecone, single Render service serving both the API and a built-in dark-themed chat UI.
-
-![Screenshot demonstrating the frontend view of the rag chatbot in use](rag_project.webp)
 
 ## Why
 Quantic capstone-style build: a production-shaped RAG pipeline end to end — ingestion, retrieval, grounded generation, and measured evaluation rather than vibes.
