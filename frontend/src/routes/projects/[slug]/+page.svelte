@@ -13,6 +13,8 @@
 	<link rel="alternate" type="text/markdown" href="/projects/{data.slug}.md" />
 </svelte:head>
 
+<a class="backlink" href="/">← Projects</a>
+
 <ContentPage title={data.metadata.title}>
 	{#snippet meta()}
 		<StatusBadge status={data.metadata.status} />
@@ -26,3 +28,16 @@
 	{/snippet}
 	<Project />
 </ContentPage>
+
+<style>
+	.backlink {
+		display: inline-block;
+		margin-bottom: 1.5rem;
+		color: var(--muted);
+		text-decoration: none;
+	}
+
+	.backlink:hover {
+		text-decoration: underline;
+	}
+</style>

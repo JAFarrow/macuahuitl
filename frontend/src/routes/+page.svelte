@@ -28,7 +28,7 @@
 		margin-top: 2.5rem;
 	}
 
-	h2 {
+	h1 {
 		margin-bottom: 1rem;
 	}
 </style>

@@ -30,37 +30,25 @@ func main() {
 		slog.Error("embed content", "err", err)
 		os.Exit(1)
 	}
-	attachments, err := fs.Sub(content, "attachments")
-	if err != nil {
-		slog.Error("embed content/attachments", "err", err)
-		os.Exit(1)
-	}
 
 	html := http.FileServerFS(build)
 
-	// Markdown sources: vault documents by section slug, and fixed files
-	// (build-generated index twins plus the vault about page).
-	project := slugMarkdown(content, "projects")
-	cvEntry := slugMarkdown(content, "cv")
+	// Markdown sources: vault project notes by slug, and fixed files (the
+	// build-generated index twin plus the vault about page).
+	project := slugMarkdown(content)
 	projectsIdx := fixedMarkdown(build, "projects.md")
-	cvIdx := fixedMarkdown(build, "cv.md")
 	about := fixedMarkdown(content, "about.md")
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/health", handleHealth)
-	// Vault attachments (images etc.); the frontend rewrites Obsidian bare
-	// image embeds to this prefix. StripPrefix + the sub-FS confines requests
-	// to the attachments directory (no ../ escapes into the rest of the vault),
-	// and directory listings are 404ed rather than rendered.
-	mux.Handle("GET /attachments/", noListings(http.StripPrefix("/attachments/", http.FileServerFS(attachments))))
 	mux.Handle("GET /projects/{slug}", sectionHandler(project, html))
 	mux.Handle("GET /projects/{slug}/{$}", onAccept(project, html))
-	mux.Handle("GET /cv/{slug}", sectionHandler(cvEntry, html))
-	mux.Handle("GET /cv/{slug}/{$}", onAccept(cvEntry, html))
 	mux.HandleFunc("GET /projects.md", projectsIdx)
-	mux.HandleFunc("GET /cv.md", cvIdx)
-	mux.Handle("GET /projects/{$}", onAccept(projectsIdx, html))
-	mux.Handle("GET /cv/{$}", onAccept(cvIdx, html))
+	// The projects index page moved to the home page: redirect browsers there,
+	// and keep serving the markdown twin to agents that negotiated for it.
+	// (Without this route the request falls through to the file server, which
+	// would render a directory listing of build/projects/.)
+	mux.Handle("GET /projects/{$}", onAccept(projectsIdx, http.RedirectHandler("/", http.StatusMovedPermanently)))
 	mux.HandleFunc("GET /about.md", about)
 	mux.Handle("GET /{$}", onAccept(about, html))
 	mux.Handle("GET /", html)
@@ -142,10 +130,10 @@ func acceptsMarkdown(r *http.Request) bool {
 	return strings.Contains(r.Header.Get("Accept"), "text/markdown")
 }
 
-// slugMarkdown returns a handler that serves one vault document:
-// content/<section>/<slug>.md. It validates the slug (defense in depth against
+// slugMarkdown returns a handler that serves one vault project note:
+// content/projects/<slug>.md. It validates the slug (defense in depth against
 // traversal) and runs the draft check.
-func slugMarkdown(content fs.FS, section string) http.HandlerFunc {
+func slugMarkdown(content fs.FS) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Mark markdown intent for the access log even when the outcome is a
 		// 404 (draft, missing, or invalid slug); the status field carries the outcome.
@@ -157,7 +145,7 @@ func slugMarkdown(content fs.FS, section string) http.HandlerFunc {
 			http.NotFound(w, r)
 			return
 		}
-		serveMarkdownFile(w, r, content, section+"/"+slug+".md")
+		serveMarkdownFile(w, r, content, "projects/"+slug+".md")
 	}
 }
 
@@ -183,18 +171,6 @@ func serveMarkdownFile(w http.ResponseWriter, r *http.Request, fsys fs.FS, path 
 	if _, err := w.Write(data); err != nil {
 		slog.Debug("write markdown response", "err", err)
 	}
-}
-
-// noListings 404s directory requests instead of rendering the stdlib file
-// server's directory listing; individual files pass through unchanged.
-func noListings(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasSuffix(r.URL.Path, "/") {
-			http.NotFound(w, r)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
 }
 
 // isDraft reports whether the document's YAML frontmatter sets draft: true.

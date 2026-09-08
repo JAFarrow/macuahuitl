@@ -1,5 +1,4 @@
 import { about } from '$lib/data/about';
-import { cvEntries } from '$lib/data/cv';
 import { projects } from '$lib/data/projects';
 import { SITE_URL } from '$lib/site';
 import type { RequestHandler } from './$types';
@@ -9,23 +8,12 @@ import type { RequestHandler } from './$types';
 // draft-filtered data loaders as the site, so drafts never appear here either.
 export const prerender = true;
 
-// Dates are normalized to YYYY-MM-DD by the loaders, so lexicographic max
-// is a correct date max.
-const latest = (items: { created: string; modified?: string }[]): string | undefined =>
-	items.reduce<string | undefined>((max, i) => {
-		const d = i.modified ?? i.created;
-		return max === undefined || d > max ? d : max;
-	}, undefined);
-
 // Sitemap URLs use the canonical trailing-slash form; the slash-less URLs
 // 301 to these.
 export const GET: RequestHandler = () => {
 	const urls: { loc: string; lastmod?: string }[] = [
 		{ loc: '/', lastmod: about.modified },
-		{ loc: '/projects/', lastmod: latest(projects) },
-		{ loc: '/cv/', lastmod: latest(cvEntries) },
-		...projects.map((project) => ({ loc: `/projects/${project.slug}/`, lastmod: project.modified ?? project.created })),
-		...cvEntries.map((entry) => ({ loc: `/cv/${entry.slug}/`, lastmod: entry.modified ?? entry.created }))
+		...projects.map((project) => ({ loc: `/projects/${project.slug}/`, lastmod: project.modified ?? project.created }))
 	];
 	const entries = urls
 		.map(

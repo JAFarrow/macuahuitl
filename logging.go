@@ -39,7 +39,7 @@ type logField struct {
 // access-log middleware: request contexts only flow downward, so the
 // middleware plants a pointer that handlers mutate.
 type requestMeta struct {
-	typ string // "markdown" | "html" | "attachment"
+	typ string // "markdown" | "html"
 }
 
 type metaCtxKey struct{}
@@ -91,9 +91,6 @@ func accessLog(exp *otlpExporter, next http.Handler) http.Handler {
 		typ := meta.typ
 		if typ == "" {
 			typ = "html"
-			if strings.HasPrefix(r.URL.Path, "/attachments/") {
-				typ = "attachment"
-			}
 		}
 		ip, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {

@@ -1,10 +1,29 @@
 import type { Component } from 'svelte';
 
+export interface ContactLink {
+	label: string;
+	url: string;
+}
+
+// Footer contact links: one flat frontmatter key per link, selected and ordered
+// by this allowlist. Adding/renaming a link means editing content/about.md and
+// this list.
+const CONTACT_KEYS = ['email', 'linkedin', 'github'] as const;
+type ContactKey = (typeof CONTACT_KEYS)[number];
+
+interface AboutFrontmatter extends Partial<Record<ContactKey, string>> {
+	title: string;
+	summary: string;
+	modified?: string;
+	draft: boolean;
+}
+
 export interface AboutMetadata {
 	title: string;
 	summary: string;
 	modified?: string;
 	draft: boolean;
+	contact: ContactLink[];
 }
 
 // YAML parses `modified: YYYY-MM-DD` into a Date; normalize back to YYYY-MM-DD
@@ -13,7 +32,7 @@ function toDateString(d: string): string {
 }
 
 interface MarkdownModule {
-	metadata: AboutMetadata;
+	metadata: AboutFrontmatter;
 	default: Component;
 }
 
@@ -29,8 +48,16 @@ if (mod.metadata.draft) {
 	throw new Error('content/about.md is drafted');
 }
 
+const contact: ContactLink[] = CONTACT_KEYS.flatMap((label) => {
+	const url = mod.metadata[label];
+	return url ? [{ label, url }] : [];
+});
+
 export const about: AboutMetadata = {
-	...mod.metadata,
-	modified: mod.metadata.modified ? toDateString(mod.metadata.modified) : undefined
+	title: mod.metadata.title,
+	summary: mod.metadata.summary,
+	modified: mod.metadata.modified ? toDateString(mod.metadata.modified) : undefined,
+	draft: mod.metadata.draft,
+	contact
 };
 export const About: Component = mod.default;

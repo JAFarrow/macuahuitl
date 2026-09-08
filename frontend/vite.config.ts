@@ -8,10 +8,9 @@ export default defineConfig({
 		fs: {
 			allow: ['..']
 		},
-		// The Go server doesn't exist yet — these will 502 in dev. Expected.
+		// The Go server doesn't exist yet — this will 502 in dev. Expected.
 		proxy: {
-			'/api': 'http://localhost:8080',
-			'/attachments': 'http://localhost:8080'
+			'/api': 'http://localhost:8080'
 		}
 	}
 });

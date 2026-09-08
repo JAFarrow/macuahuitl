@@ -1,6 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import type { Snippet } from 'svelte';
+	import { about } from '$lib/data/about';
 
 	let { children }: { children: Snippet } = $props();
 </script>
@@ -8,16 +9,19 @@
 <div class="site">
 	<header>
 		<a class="site-title" href="/">Justin</a>
-		<nav>
-			<a href="/">Home</a>
-			<a href="/projects">Projects</a>
-			<a href="/cv">CV</a>
-		</nav>
 	</header>
 
 	<main>
 		{@render children()}
 	</main>
+
+	{#if about.contact.length}
+		<footer>
+			{#each about.contact as link (link.label)}
+				<a href={link.url} target="_blank" rel="noopener noreferrer">{link.label}</a>
+			{/each}
+		</footer>
+	{/if}
 </div>
 
 <style>
@@ -25,12 +29,16 @@
 		max-width: var(--measure);
 		margin: 0 auto;
 		padding: 2rem 1rem;
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
+	}
+
+	main {
+		flex: 1;
 	}
 
 	header {
-		display: flex;
-		justify-content: space-between;
-		align-items: baseline;
 		margin-bottom: 2rem;
 	}
 
@@ -40,7 +48,14 @@
 		color: var(--fg);
 	}
 
-	nav a {
-		margin-left: 1rem;
+	footer {
+		display: flex;
+		justify-content: center;
+		flex-wrap: wrap;
+		gap: 1rem;
+		margin-top: 2rem;
+		padding-top: 1rem;
+		border-top: 1px solid var(--muted);
+		font-size: 0.875em;
 	}
 </style>
