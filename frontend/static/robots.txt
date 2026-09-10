@@ -2,5 +2,3 @@ User-agent: *
 Allow: /
 
 Sitemap: https://www.justin-farrow-dev.com/sitemap.xml
-
-# Machine-readable site map for LLM agents: /llms.txt

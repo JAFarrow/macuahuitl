@@ -3,8 +3,6 @@ import { projects } from '$lib/data/projects';
 import { SITE_URL } from '$lib/site';
 import type { RequestHandler } from './$types';
 
-// Prerendered to build/projects.md at `npm run build` time and served by the Go
-// server. Mirrors the `/projects/` HTML index as markdown for agents.
 export const prerender = true;
 
 export const GET: RequestHandler = () => {

@@ -5,9 +5,6 @@ export interface ContactLink {
 	url: string;
 }
 
-// Footer contact links: one flat frontmatter key per link, selected and ordered
-// by this allowlist. Adding/renaming a link means editing content/about.md and
-// this list.
 const CONTACT_KEYS = ['email', 'linkedin', 'github'] as const;
 type ContactKey = (typeof CONTACT_KEYS)[number];
 
@@ -26,7 +23,6 @@ export interface AboutMetadata {
 	contact: ContactLink[];
 }
 
-// YAML parses `modified: YYYY-MM-DD` into a Date; normalize back to YYYY-MM-DD
 function toDateString(d: string): string {
 	return new Date(d).toISOString().slice(0, 10);
 }

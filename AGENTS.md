@@ -4,7 +4,7 @@
 
 ## Layout
 
-- `main.go` — routing and server lifecycle. `logging.go` — access logging and the OTLP exporter. Both are `package main` at the repo root; no `cmd/`, `internal/`, or `pkg/` — the codebase is too small for layout ceremony, and `go:embed` patterns can't reach parent dirs anyway.
+- `main.go` — routing and server lifecycle. `logging.go` — access logging (slog JSON to stdout). Both are `package main` at the repo root; no `cmd/`, `internal/`, or `pkg/` — the codebase is too small for layout ceremony, and `go:embed` patterns can't reach parent dirs anyway.
 - `content/` — the Obsidian vault (`projects/`, `templates/`, plus `about.md` for the home page). Markdown with YAML frontmatter, standard markdown links.
 - `frontend/` — SvelteKit app (Svelte 5, mdsvex, `adapter-static`). Build output goes to `frontend/build/`.
 - `frontend/static/robots.txt` — crawler policy (allow all), copied verbatim into `frontend/build/`.
@@ -32,6 +32,7 @@
 
 ## Conventions & gotchas
 
+- **Code is comment-free by convention.** Rationale and gotchas live in this file, not in source comments — don't add comments when editing; document here instead. (Functional directives like `//go:embed` and the Dockerfile `# syntax=` line are not comments and stay.)
 - **Canonical origin is `https://www.justin-farrow-dev.com`** — Cloudflare 301s apex → www at the edge. There is no Go-side host redirect: `macuahuitl.onrender.com` and direct-origin apex hits are served as-is. The canonical origin lives in `frontend/src/lib/site.ts` and is imported by the sitemap, `llms.txt`, and the index `.md` generators. `robots.txt` separately hardcodes the same origin in its `Sitemap:` line; update both if it ever moves.
 - **`trailingSlash: 'always'` is load-bearing.** Routes prerender as `route/index.html` so `http.FileServerFS` resolves everything; slash-less URLs 301 to the slash form. Don't revert without adding Go-side `.html` mapping.
 - **No mid-segment wildcards in `http.ServeMux`** (`"/projects/{slug}.md"` panics at startup). That's why one `sectionHandler` per section dispatches on `.md` suffix and `Accept` header.
@@ -49,15 +50,15 @@
 
 ## Observability
 
-- **Access logs, not traces.** The goal is usage insight (HTML vs markdown serving, agents vs humans), which is a per-request counting question — a log signal. One structured `slog` line per request always goes to local stdout (Render log retention is the fallback); when `OTEL_EXPORTER_OTLP_ENDPOINT` is set, the same records are batched to Grafana Cloud's OTLP gateway at `{endpoint}/v1/logs` (Loki).
-- **Hand-rolled OTLP/JSON on purpose.** The official OTel Go SDK would add ~16 modules, breaking the zero-deps hard rule for marginal benefit at this scale. The exporter (`logging.go`) reads the standard env vars Grafana issues: `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS` (`k=v,k=v`; values decoded with `url.PathUnescape` — `QueryUnescape` would corrupt `+` in the base64 Basic token), `OTEL_SERVICE_NAME` (default `macuahuitl`). Endpoint unset → exporter is nil, zero overhead.
-- **Log fields:** `method`, `route` (`r.Pattern`, e.g. `GET /projects/{slug}`), `path`, `status`, `duration_ms`, `bytes`, `type`, `user_agent`, `referer`, `ip` (first `X-Forwarded-For` hop). `type` is `markdown` | `html`: markdown handlers mark `markdown` via a `*requestMeta` planted in the request context (even for draft/missing/invalid-slug 404s — intent, with outcome in `status`); everything else is `html`.
+- **Access logs, not traces.** The goal is usage insight (HTML vs markdown serving, agents vs humans), which is a per-request counting question — a log signal. One structured `slog` JSON line per request goes to stdout, the only transport — there is no in-app exporter and no app-side logging config. Render's workspace log stream (syslog TLS, dashboard-only config) forwards stdout to Better Stack; Render's own log retention is the fallback when no stream is configured.
+- **stdout JSON is aligned to Better Stack's canonical fields.** `setupLogging()` (in `logging.go`, called first in `main`) installs a `slog.JSONHandler` whose `ReplaceAttr` renames top-level `time` → `dt` and `msg` → `message`: Better Stack parses `dt` as the event time and shows `message` as the log line, with all other keys becoming searchable fields. Render additionally maps the JSON `level` field to the syslog priority it attaches when streaming.
+- **Log fields:** `method`, `route` (`r.Pattern`, e.g. `GET /projects/{slug}`), `path`, `status`, `duration_ms` (float, µs precision — whole-ms truncation zeroes nearly every request on this site), `bytes`, `type`, `user_agent`, `referer`, `ip` (first `X-Forwarded-For` hop). `type` is `markdown` | `html`: markdown handlers mark `markdown` via a `*requestMeta` planted in the request context (even for draft/missing/invalid-slug 404s — intent, with outcome in `status`); everything else is `html`.
 - **`/api/health` is never logged** — Render polls it constantly; pure noise.
-- Example Loki query: `sum by (type) (count_over_time({service_name="macuahuitl"} [1h]))`.
-- The Dockerfile copies `ca-certificates.crt` from the golang builder stage into scratch — Grafana's gateway is HTTPS and scratch has no roots. Graceful shutdown (SIGINT/SIGTERM) flushes buffered records on deploy.
+- Example Better Stack query: filter on `type` in Live tail (e.g. `type:markdown`) for the html/markdown split.
+- Graceful shutdown (SIGINT/SIGTERM) remains so in-flight requests finish on deploy; logs are unbuffered stdout, so there is nothing to flush. The scratch image carries no CA bundle — the binary makes no outbound calls.
 
 ## Deployment
 
-Render, via `Dockerfile` (node → golang → scratch, ~16 MB image) + `render.yaml` blueprint (starter plan, frankfurt, health check `/api/health`, auto-deploy on `main`). Publish flow: commit vault changes → push → auto-deploy. Grafana credentials are `sync: false` env vars in the blueprint — set `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_HEADERS` once in the Render dashboard.
+Render, via `Dockerfile` (node → golang → scratch, ~16 MB image) + `render.yaml` blueprint (starter plan, frankfurt, health check `/api/health`, auto-deploy on `main`). Publish flow: commit vault changes → push → auto-deploy. Logs reach Better Stack via Render's log stream: create a Render-platform source in Better Stack, then set the workspace's default log-stream destination to `<ingesting-host>:6514` with the source token (Render dashboard → Integrations > Observability). Blueprints have no log-stream field, so this is a one-time dashboard step; the app itself needs no env vars or secrets.
 
 `llms.txt` and `sitemap.xml` ride the existing frontend build (`npm run build`) in every environment, so CI, the Dockerfile, and `render.yaml` need no special-casing for them.

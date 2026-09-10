@@ -31,7 +31,6 @@ function slugFromPath(path: string): string {
 	return path.split('/').pop()!.replace(/\.md$/, '');
 }
 
-// YAML parses `created: YYYY-MM-DD` into a Date; normalize back to YYYY-MM-DD
 function toDateString(created: string): string {
 	return new Date(created).toISOString().slice(0, 10);
 }

@@ -3,13 +3,8 @@ import { projects } from '$lib/data/projects';
 import { SITE_URL } from '$lib/site';
 import type { RequestHandler } from './$types';
 
-// Prerendered to build/sitemap.xml at `npm run build` time and served by the
-// Go file server, same as llms.txt. Regenerates on every deploy from the same
-// draft-filtered data loaders as the site, so drafts never appear here either.
 export const prerender = true;
 
-// Sitemap URLs use the canonical trailing-slash form; the slash-less URLs
-// 301 to these.
 export const GET: RequestHandler = () => {
 	const urls: { loc: string; lastmod?: string }[] = [
 		{ loc: '/', lastmod: about.modified },

@@ -1,4 +1,3 @@
-# Run `cd frontend && npm run dev` alongside for frontend work.
 dev:
     go run .
 

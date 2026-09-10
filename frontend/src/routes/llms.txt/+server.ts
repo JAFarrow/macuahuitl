@@ -4,9 +4,6 @@ import { projects } from '$lib/data/projects';
 import { SITE_URL } from '$lib/site';
 import type { RequestHandler } from './$types';
 
-// Prerendered to build/llms.txt at `npm run build` time and served by the Go
-// file server. Regenerates on every deploy from the same draft-filtered data
-// loaders as the site, so vault changes propagate automatically.
 export const prerender = true;
 
 interface Entry {
