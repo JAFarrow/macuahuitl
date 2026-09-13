@@ -6,7 +6,7 @@
 </script>
 
 <svelte:head>
-	<title>Justin</title>
+	<title>Justin Farrow</title>
 	<link rel="alternate" type="text/markdown" href="/about.md" />
 </svelte:head>
 
@@ -25,10 +25,10 @@
 
 <style>
 	section {
-		margin-top: 2.5rem;
+		margin-top: 2rem;
 	}
 
 	h1 {
-		margin-bottom: 1rem;
+		margin-bottom: .5rem;
 	}
 </style>
