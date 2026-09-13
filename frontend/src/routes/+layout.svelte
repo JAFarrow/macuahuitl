@@ -1,14 +1,19 @@
 <script lang="ts">
 	import '../app.css';
 	import type { Snippet } from 'svelte';
+	import { page } from '$app/state';
 	import { about } from '$lib/data/about';
 
 	let { children }: { children: Snippet } = $props();
+	const onProject = $derived(page.url.pathname.startsWith('/projects/'));
 </script>
 
 <div class="site">
 	<header>
-		<a class="site-title" href="/">Justin</a>
+		<h2 class="site-title">Justin Farrow</h2>
+		{#if onProject}
+			<a class="backlink" href="/">← Home</a>
+		{/if}
 	</header>
 
 	<main>
@@ -18,7 +23,7 @@
 	{#if about.contact.length}
 		<footer>
 			{#each about.contact as link (link.label)}
-				<a href={link.url} target="_blank" rel="noopener noreferrer">{link.label}</a>
+				<a href={link.url} target="_blank" rel="noopener">{link.label}</a>
 			{/each}
 		</footer>
 	{/if}
@@ -39,6 +44,9 @@
 	}
 
 	header {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
 		margin-bottom: 2rem;
 	}
 
@@ -46,6 +54,15 @@
 		font-weight: bold;
 		text-decoration: none;
 		color: var(--fg);
+	}
+
+	.backlink {
+		color: var(--muted);
+		text-decoration: none;
+	}
+
+	.backlink:hover {
+		text-decoration: underline;
 	}
 
 	footer {
