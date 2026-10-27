@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { name, concert, note, password, matches, STORAGE_KEY } from '$lib/beloved/config';
+	import { name, concert, password, matches, STORAGE_KEY } from '$lib/beloved/config';
 
 	const unlockKey = STORAGE_KEY + ':unlocked';
 
@@ -9,12 +9,13 @@
 	let error = $state('');
 	let shake = $state(false);
 	let ready = $state(false);
+	let topHeight = $state(0);
 
 	const confetti = Array.from({ length: 36 }, (_, i) => ({
 		left: (i * 97) % 100,
 		delay: (i % 12) * 0.25,
 		duration: 3.5 + (i % 5) * 0.6,
-		color: ['#c4683a', '#e8923c', '#fbf1dd', '#6b3f5e'][i % 4]
+		color: ['#ff5a1f', '#c9461a', '#d9a441', '#8a3b12'][i % 4]
 	}));
 
 	onMount(() => {
@@ -28,7 +29,7 @@
 			localStorage.setItem(unlockKey, password);
 			unlocked = true;
 		} else {
-			error = 'That is not it. The games will tell you.';
+			error = 'Not quite. Hint: it is one of your favourite songs.';
 			shake = false;
 			requestAnimationFrame(() => (shake = true));
 		}
@@ -48,14 +49,17 @@
 		<p class="eyebrow">Happy birthday, {name}</p>
 		<h1>We are going to see {concert.artist}</h1>
 
-		<section class="ticket">
-			<p class="tour">{concert.tour}</p>
-			<p class="when">{concert.date}</p>
-			<p class="where">{concert.venue}, {concert.city}</p>
-			<p class="admit">Admit two</p>
+		<section class="ticket" style="--tear:{topHeight}px">
+			<div class="top" bind:clientHeight={topHeight}>
+				<p class="tour">{concert.tour}</p>
+				<p class="when">{concert.date}</p>
+				<p class="where">{concert.venue}, {concert.city}</p>
+			</div>
+			<div class="admit">
+				<p>Admit two</p>
+				<div class="barcode" aria-hidden="true"></div>
+			</div>
 		</section>
-
-		<p class="note">{note}</p>
 	{:else}
 		<p class="eyebrow">One more door</p>
 		<h1>{name}</h1>
@@ -79,132 +83,132 @@
 		opacity: 1;
 	}
 
-	.eyebrow {
-		text-align: center;
-		letter-spacing: 0.2em;
-		text-transform: uppercase;
-		font-size: 0.8rem;
-		color: var(--cream);
-		margin-top: 1.5rem;
+	main :global(.eyebrow),
+	main :global(h1),
+	.ticket {
+		position: relative;
+		z-index: 1;
 	}
 
-	h1 {
-		text-align: center;
-		font-size: clamp(2rem, 8vw, 3rem);
-		font-weight: 400;
-		font-style: italic;
-		color: var(--cream);
-		margin-bottom: 1.5rem;
-		text-shadow: 0 2px 12px rgb(59 36 22 / 0.35);
-	}
-
-	.card {
-		display: flex;
-		flex-direction: column;
-		gap: 0.9rem;
-		padding: 1.5rem;
-		background: rgb(251 241 221 / 0.94);
-		border-radius: 1rem;
-		box-shadow: 0 10px 30px rgb(59 36 22 / 0.25);
-	}
-
-	label {
-		font-size: 1.15rem;
-	}
-
-	input {
-		font: inherit;
-		padding: 0.7rem 0.9rem;
-		border: 2px solid var(--ink);
-		border-radius: 0.6rem;
-		background: #fff;
-		color: var(--ink);
-	}
-
-	input:focus-visible,
-	.btn:focus-visible,
-	.link:focus-visible {
-		outline: 3px solid var(--sun);
-		outline-offset: 2px;
-	}
-
-	.btn {
-		font: inherit;
-		padding: 0.75rem 1.2rem;
-		border: 0;
-		border-radius: 999px;
-		background: var(--ink);
-		color: var(--cream);
-		cursor: pointer;
-	}
-
-	.btn:hover {
-		background: var(--clay);
-	}
-
-	.link {
-		text-align: center;
-		color: var(--dusk);
-	}
-
-	.error {
-		color: var(--clay);
-		font-style: italic;
-	}
-
-	.shake {
-		animation: shake 0.4s;
+	:global(.beloved .content) main h1 {
+		margin-top: 0.4rem;
+		margin-bottom: 1.25rem;
+		font-size: clamp(2rem, 9.5vw, 3.6rem);
+		line-height: 1.05;
 	}
 
 	.ticket {
-		position: relative;
 		text-align: center;
-		padding: 2rem 1.5rem;
-		background: var(--cream);
-		border-radius: 0.8rem;
-		border: 2px dashed var(--clay);
-		box-shadow: 0 12px 34px rgb(59 36 22 / 0.3);
+		color: var(--ink);
 		animation: rise 0.7s ease;
 	}
 
+	.ticket::before {
+		content: '';
+		position: absolute;
+		top: 8px;
+		right: -8px;
+		bottom: -8px;
+		left: 8px;
+		z-index: -1;
+		background: var(--accent);
+		-webkit-mask:
+			radial-gradient(
+				circle 8px at calc(100% - 8px) calc(var(--tear) - 8px),
+				transparent 96%,
+				#000 100%
+			),
+			linear-gradient(to right, transparent calc(100% - 8px), #000 calc(100% - 8px));
+		mask:
+			radial-gradient(
+				circle 8px at calc(100% - 8px) calc(var(--tear) - 8px),
+				transparent 96%,
+				#000 100%
+			),
+			linear-gradient(to right, transparent calc(100% - 8px), #000 calc(100% - 8px));
+	}
+
+	.top,
+	.admit {
+		background: var(--paper);
+	}
+
+	.top {
+		padding: 1.5rem 1.25rem 1.25rem;
+		-webkit-mask:
+			radial-gradient(circle 8px at 0 100%, transparent 96%, #000 100%),
+			radial-gradient(circle 8px at 100% 100%, transparent 96%, #000 100%);
+		-webkit-mask-composite: source-in;
+		mask:
+			radial-gradient(circle 8px at 0 100%, transparent 96%, #000 100%),
+			radial-gradient(circle 8px at 100% 100%, transparent 96%, #000 100%);
+		mask-composite: intersect;
+	}
+
+	.ticket p {
+		color: var(--ink);
+	}
+
 	.tour {
-		font-size: 1.5rem;
-		font-style: italic;
-		color: var(--clay);
+		font-family: var(--mono);
+		font-size: 0.8rem;
+		letter-spacing: 0.3em;
+		text-transform: uppercase;
 	}
 
 	.when {
-		font-size: 1.9rem;
-		font-weight: bold;
-		margin: 0.4rem 0;
+		margin: 0.6rem 0 0.3rem;
+		font-family: var(--display);
+		font-size: clamp(2rem, 9vw, 3.4rem);
+		line-height: 1;
+		text-transform: uppercase;
+		color: var(--accent);
 	}
 
 	.where {
-		font-size: 1.1rem;
+		font-family: var(--display);
+		font-size: 1.15rem;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
 	}
 
 	.admit {
-		margin-top: 1.2rem;
-		padding-top: 0.8rem;
-		border-top: 1px dashed var(--clay);
-		letter-spacing: 0.25em;
-		text-transform: uppercase;
+		padding: 0.9rem 1.25rem 1.1rem;
+		border-top: 2px dashed var(--ink);
+		font-family: var(--mono);
 		font-size: 0.8rem;
-		color: var(--dusk);
+		letter-spacing: 0.3em;
+		text-transform: uppercase;
+		-webkit-mask:
+			radial-gradient(circle 8px at 0 0, transparent 96%, #000 100%),
+			radial-gradient(circle 8px at 100% 0, transparent 96%, #000 100%);
+		-webkit-mask-composite: source-in;
+		mask:
+			radial-gradient(circle 8px at 0 0, transparent 96%, #000 100%),
+			radial-gradient(circle 8px at 100% 0, transparent 96%, #000 100%);
+		mask-composite: intersect;
 	}
 
-	.note {
-		margin-top: 1.75rem;
-		padding: 1.25rem;
-		background: rgb(251 241 221 / 0.94);
-		border-radius: 1rem;
-		font-style: italic;
-		white-space: pre-line;
+	.barcode {
+		height: 2.25rem;
+		margin-top: 0.7rem;
+		background: repeating-linear-gradient(
+			90deg,
+			var(--ink) 0 2px,
+			transparent 2px 5px,
+			var(--ink) 5px 6px,
+			transparent 6px 10px,
+			var(--ink) 10px 13px,
+			transparent 13px 15px
+		);
 	}
 
 	.confetti {
 		position: fixed;
-		inset: 0;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		left: 0;
 		pointer-events: none;
 		overflow: hidden;
 	}
@@ -212,9 +216,10 @@
 	.confetti span {
 		position: absolute;
 		top: -2rem;
-		width: 0.6rem;
-		height: 1rem;
-		border-radius: 2px;
+		width: 0.7rem;
+		height: 0.7rem;
+		border-radius: 0 100% 0 100%;
+		opacity: 0.85;
 		animation: fall linear infinite;
 	}
 
@@ -231,22 +236,12 @@
 		}
 	}
 
-	@keyframes shake {
-		25% {
-			transform: translateX(-6px);
-		}
-		75% {
-			transform: translateX(6px);
-		}
-	}
-
 	@media (prefers-reduced-motion: reduce) {
 		.confetti {
 			display: none;
 		}
 
-		.ticket,
-		.shake {
+		.ticket {
 			animation: none;
 		}
 

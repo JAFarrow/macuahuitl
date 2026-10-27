@@ -1,4 +1,4 @@
-export const name = 'Miss Jordaan';
+export const name = 'Micaela';
 
 export interface Question {
 	prompt: string;
@@ -24,7 +24,7 @@ export const questions: Question[] = [
 	}
 ];
 
-export const password = 'dreamville';
+export const password = 'loveyours';
 
 export const shift = 4;
 
@@ -41,9 +41,6 @@ export const concert = {
 	venue: 'FNB Stadium',
 	city: 'Johannesburg'
 };
-
-export const note =
-	'PLACEHOLDER — a personal note goes here. Happy birthday, I cannot wait to share this night with you.';
 
 export function normalize(value: string): string {
 	return value

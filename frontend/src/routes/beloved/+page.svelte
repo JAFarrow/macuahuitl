@@ -44,7 +44,7 @@
 </script>
 
 <main class:ready>
-	<p class="eyebrow">A little something for</p>
+	<p class="eyebrow">Just for you,</p>
 	<h1>{name}</h1>
 
 	{#if step === 0}
@@ -73,8 +73,10 @@
 				<ul class="cipher">
 					{#each sample as letter, i (letter)}
 						<li style="--i:{i}">
-							<span class="glyph plain">{letter}</span>
-							<span class="glyph coded">{shifted(letter)}</span>
+							<span class="flip">
+								<span class="glyph plain">{letter}</span>
+								<span class="glyph coded">{shifted(letter)}</span>
+							</span>
 						</li>
 					{/each}
 				</ul>
@@ -97,159 +99,89 @@
 		opacity: 1;
 	}
 
-	.eyebrow {
-		text-align: center;
-		letter-spacing: 0.2em;
-		text-transform: uppercase;
-		font-size: 0.8rem;
-		color: var(--cream);
-		margin-top: 1.5rem;
-	}
-
-	h1 {
-		text-align: center;
-		font-size: clamp(2.2rem, 9vw, 3.2rem);
-		font-weight: 400;
-		font-style: italic;
-		color: var(--cream);
-		margin-bottom: 1.5rem;
-		text-shadow: 0 2px 12px rgb(59 36 22 / 0.35);
-	}
-
 	.card {
-		display: flex;
-		flex-direction: column;
-		gap: 0.9rem;
-		padding: 1.5rem;
-		background: rgb(251 241 221 / 0.94);
-		border-radius: 1rem;
-		box-shadow: 0 10px 30px rgb(59 36 22 / 0.25);
 		animation: rise 0.45s ease;
-	}
-
-	.step {
-		font-size: 0.8rem;
-		letter-spacing: 0.15em;
-		text-transform: uppercase;
-		color: var(--clay);
-	}
-
-	label {
-		font-size: 1.15rem;
-	}
-
-	input {
-		font: inherit;
-		padding: 0.7rem 0.9rem;
-		border: 2px solid var(--ink);
-		border-radius: 0.6rem;
-		background: #fff;
-		color: var(--ink);
-	}
-
-	input:focus-visible,
-	.btn:focus-visible,
-	.link:focus-visible {
-		outline: 3px solid var(--sun);
-		outline-offset: 2px;
-	}
-
-	.btn {
-		display: inline-block;
-		text-align: center;
-		text-decoration: none;
-		font: inherit;
-		padding: 0.75rem 1.2rem;
-		border: 0;
-		border-radius: 999px;
-		background: var(--ink);
-		color: var(--cream);
-		cursor: pointer;
-	}
-
-	.btn:hover {
-		background: var(--clay);
-	}
-
-	.link {
-		font: inherit;
-		background: none;
-		border: 0;
-		color: var(--dusk);
-		text-decoration: underline;
-		cursor: pointer;
-	}
-
-	.nudge {
-		color: var(--clay);
-		font-style: italic;
 	}
 
 	.reveal {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 2.5rem;
 		padding-top: 1.5rem;
+	}
+
+	.reveal > :global(* + *) {
+		margin-top: 2.5rem;
 	}
 
 	.cipher {
 		display: flex;
 		justify-content: center;
-		gap: clamp(0.5rem, 3vw, 1rem);
 		list-style: none;
+		margin: 0;
 		padding: 0;
+	}
+
+	.cipher li + li {
+		margin-left: clamp(0.5rem, 3vw, 0.8rem);
 	}
 
 	.cipher li {
 		position: relative;
-		width: clamp(3.6rem, 15vw, 4.6rem);
-		height: clamp(5rem, 21vw, 6.4rem);
-		border-radius: 0.9rem;
-		background: var(--cream);
-		box-shadow: 0 10px 26px rgb(59 36 22 / 0.3);
-		overflow: hidden;
+		width: clamp(2.8rem, 14vw, 4.6rem);
+		height: clamp(4.4rem, 19vw, 6.4rem);
+		perspective: 600px;
 		animation: rise 0.6s ease both;
 		animation-delay: calc(var(--i) * 0.18s);
 	}
 
+	.flip {
+		position: absolute;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		left: 0;
+		transform-style: preserve-3d;
+		animation: flip 0.8s cubic-bezier(0.45, 0, 0.2, 1) both;
+		animation-delay: calc(1.3s + var(--i) * 0.45s);
+	}
+
 	.glyph {
 		position: absolute;
-		inset: 0;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		left: 0;
 		display: grid;
 		place-items: center;
-		font-size: clamp(2.4rem, 10vw, 3.2rem);
-		font-style: italic;
+		background: var(--panel);
+		border: 2px solid var(--paper);
+		box-shadow: 5px 5px 0 var(--accent);
+		backface-visibility: hidden;
+		font-family: var(--display);
+		font-size: clamp(2.2rem, 11vw, 3.8rem);
+		text-transform: uppercase;
 	}
 
 	.plain {
-		color: var(--ink);
-		animation: out 0.55s ease both;
-		animation-delay: calc(1.3s + var(--i) * 0.45s);
+		color: var(--paper);
 	}
 
 	.coded {
-		color: var(--clay);
-		font-weight: bold;
-		animation: in 0.55s ease both;
-		animation-delay: calc(1.3s + var(--i) * 0.45s);
+		color: var(--accent);
+		transform: rotateX(180deg);
 	}
 
 	.actions {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 0.9rem;
 		animation: rise 0.6s ease both;
 		animation-delay: 3.8s;
 	}
 
-	.actions .link {
-		color: var(--cream);
-	}
-
-	.shake {
-		animation: shake 0.4s;
+	.actions > :global(* + *) {
+		margin-top: 1rem;
 	}
 
 	@keyframes rise {
@@ -259,41 +191,22 @@
 		}
 	}
 
-	@keyframes out {
+	@keyframes flip {
 		to {
-			transform: translateY(-110%);
-			opacity: 0;
-		}
-	}
-
-	@keyframes in {
-		from {
-			transform: translateY(110%);
-			opacity: 0;
-		}
-	}
-
-	@keyframes shake {
-		25% {
-			transform: translateX(-6px);
-		}
-		75% {
-			transform: translateX(6px);
+			transform: rotateX(180deg);
 		}
 	}
 
 	@media (prefers-reduced-motion: reduce) {
 		.card,
-		.shake,
 		.cipher li,
-		.actions,
-		.plain,
-		.coded {
+		.flip,
+		.actions {
 			animation: none;
 		}
 
-		.plain {
-			display: none;
+		.flip {
+			transform: rotateX(180deg);
 		}
 
 		main {
