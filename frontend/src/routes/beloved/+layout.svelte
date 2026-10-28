@@ -193,6 +193,7 @@
 		font-size: 0.85rem;
 		letter-spacing: 0.08em;
 		text-align: center;
+		min-height: 2.75rem;
 		padding: 0.6rem 0.75rem;
 		background: none;
 		border: 0;
