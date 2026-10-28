@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Project } from '$lib/data/projects';
+	import type { Project } from '#lib/data/projects';
 	import StatusBadge from './StatusBadge.svelte';
 
 	let { project }: { project: Project } = $props();

@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { projectComponents } from '$lib/data/projects';
-	import ContentPage from '$lib/components/ContentPage.svelte';
-	import StatusBadge from '$lib/components/StatusBadge.svelte';
+	import { projectComponents } from '#lib/data/projects';
+	import ContentPage from '#lib/components/ContentPage.svelte';
+	import StatusBadge from '#lib/components/StatusBadge.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();

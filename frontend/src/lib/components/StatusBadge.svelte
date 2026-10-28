@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ProjectStatus } from '$lib/data/projects';
+	import type { ProjectStatus } from '#lib/data/projects';
 
 	let { status }: { status: ProjectStatus } = $props();
 

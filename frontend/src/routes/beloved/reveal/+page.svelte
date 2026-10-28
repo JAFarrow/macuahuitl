@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { name, concert, password, matches, STORAGE_KEY } from '$lib/beloved/config';
+	import { name, concert, password, matches, STORAGE_KEY } from '#lib/beloved/config';
 
 	const unlockKey = STORAGE_KEY + ':unlocked';
 

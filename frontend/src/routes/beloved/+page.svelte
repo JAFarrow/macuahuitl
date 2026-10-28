@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { name, questions, alphabet, shifted, matches, STORAGE_KEY } from '$lib/beloved/config';
+	import { name, questions, alphabet, shifted, matches, STORAGE_KEY } from '#lib/beloved/config';
 
 	const doneStep = questions.length + 1;
 	const sample = alphabet.slice(0, 5);

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { name } from '$lib/beloved/config';
+	import { name } from '#lib/beloved/config';
 
 	let { children }: { children: Snippet } = $props();
 </script>

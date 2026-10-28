@@ -2,7 +2,7 @@
 	import '../../app.css';
 	import type { Snippet } from 'svelte';
 	import { page } from '$app/state';
-	import { about } from '$lib/data/about';
+	import { about } from '#lib/data/about';
 
 	let { children }: { children: Snippet } = $props();
 	const onProject = $derived(page.url.pathname.startsWith('/projects/'));
