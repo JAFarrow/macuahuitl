@@ -5,7 +5,6 @@
 	const doneStep = questions.length + 1;
 	const sample = alphabet.slice(0, 5);
 	const praises = ['Correct', "That's it", 'Right'];
-
 	let step = $state(0);
 	let answer = $state('');
 	let nudge = $state('');
@@ -97,7 +96,17 @@
 			<button class="btn" type="submit" disabled={cheer}>Check</button>
 			{#if cheer}
 				<div class="stamp" role="status">
+					<svg class="moth" viewBox="0 0 64 48" aria-hidden="true">
+						<g class="wings" fill="currentColor">
+							<path d="M32 24C22 4 4 2 3 14C2 24 14 30 32 24Z" />
+							<path d="M32 24C42 4 60 2 61 14C62 24 50 30 32 24Z" />
+							<path d="M32 24C20 28 10 44 20 45C28 46 32 34 32 24Z" opacity="0.8" />
+							<path d="M32 24C44 28 54 44 44 45C36 46 32 34 32 24Z" opacity="0.8" />
+						</g>
+						<rect x="31" y="14" width="2" height="22" rx="1" fill="#3b2f2a" opacity="0.6" />
+					</svg>
 					<span>{praise}</span>
+					<b class="rule" aria-hidden="true"></b>
 				</div>
 			{/if}
 		</form>
@@ -142,32 +151,70 @@
 		animation: pulse 0.9s ease;
 	}
 
-	.stamp {
+	.card > .stamp {
+		margin: 0;
 		position: absolute;
 		top: 0;
 		right: 0;
 		bottom: 0;
 		left: 0;
-		display: grid;
-		place-items: center;
-		background: rgb(21 20 18 / 0.9);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		overflow: hidden;
+		border-radius: 14px;
+		background: rgb(246 239 226 / 0.94);
 		animation:
 			fade 0.6s ease both,
 			leave 0.6s ease 2.4s forwards;
 	}
 
+	.stamp::before {
+		content: '';
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: 120%;
+		aspect-ratio: 1;
+		margin: -60% 0 0 -60%;
+		background: radial-gradient(circle, rgb(217 164 65 / 0.35), rgb(63 101 144 / 0.1) 40%, transparent 65%);
+		animation: glow 1.6s ease-out 0.2s both;
+	}
+
+	.moth {
+		position: relative;
+		width: 3.6rem;
+		color: var(--accent);
+		animation: moth 1.7s cubic-bezier(0.3, 0.5, 0.3, 1) 0.1s both;
+	}
+
+	.wings {
+		transform-box: fill-box;
+		transform-origin: center;
+		animation: flutter 0.3s ease-in-out 0.1s 6 alternate;
+	}
+
 	.stamp span {
+		position: relative;
+		margin-top: 0.4rem;
 		font-family: var(--display);
-		font-size: clamp(2.2rem, 9vw, 3.6rem);
-		letter-spacing: 0.04em;
+		font-size: clamp(2.2rem, 9vw, 3.4rem);
+		font-style: italic;
+		letter-spacing: 0.01em;
 		white-space: nowrap;
-		text-transform: uppercase;
-		color: var(--ink);
-		background: var(--accent);
-		padding: 0.1em 0.5em;
-		box-shadow: 6px 6px 0 var(--paper);
-		transform: rotate(-5deg);
-		animation: stamp 1.1s cubic-bezier(0.3, 0.9, 0.3, 1) 0.2s both;
+		color: var(--accent);
+		animation: praise 0.8s cubic-bezier(0.2, 0.9, 0.3, 1.2) 1.1s both;
+	}
+
+	.rule {
+		position: relative;
+		width: 7rem;
+		height: 2px;
+		margin-top: 0.5rem;
+		background: linear-gradient(90deg, transparent, #d9a441, transparent);
+		transform-origin: center;
+		animation: draw 0.6s ease 1.6s both;
 	}
 
 	.reveal {
@@ -222,17 +269,18 @@
 		display: grid;
 		place-items: center;
 		background: var(--panel);
-		border: 2px solid var(--paper);
-		box-shadow: 5px 5px 0 var(--accent);
+		border: 1px solid var(--line);
+		border-radius: 12px;
+		box-shadow: var(--shadow);
 		-webkit-backface-visibility: hidden;
 		backface-visibility: hidden;
 		font-family: var(--display);
 		font-size: clamp(2.2rem, 11vw, 3.8rem);
-		text-transform: uppercase;
+		font-style: italic;
 	}
 
 	.plain {
-		color: var(--paper);
+		color: var(--text);
 	}
 
 	.coded {
@@ -266,32 +314,62 @@
 	}
 
 	@keyframes pulse {
-		0% {
-			box-shadow: 8px 8px 0 var(--accent);
-		}
-		30% {
-			transform: scale(1.03);
-			box-shadow: 0 0 0 6px var(--accent);
-		}
+		0%,
 		100% {
-			box-shadow: 8px 8px 0 var(--accent);
+			box-shadow: var(--shadow);
+		}
+		40% {
+			box-shadow:
+				var(--shadow),
+				0 0 0 8px rgb(63 101 144 / 0.15);
 		}
 	}
 
-	@keyframes stamp {
-		0% {
+	@keyframes praise {
+		from {
 			opacity: 0;
-			transform: rotate(-18deg) scale(2.6);
+			transform: translateY(10px) scale(0.85);
 		}
-		45% {
+	}
+
+	@keyframes moth {
+		from {
+			opacity: 0;
+			transform: translate(-90px, 70px) rotate(-35deg) scale(0.3);
+		}
+		60% {
 			opacity: 1;
-			transform: rotate(-4deg) scale(0.94);
+			transform: translate(10px, -8px) rotate(8deg) scale(1.1);
 		}
-		70% {
-			transform: rotate(-6deg) scale(1.03);
+	}
+
+	@keyframes flutter {
+		from {
+			transform: scaleX(1);
 		}
-		100% {
-			transform: rotate(-5deg) scale(1);
+		to {
+			transform: scaleX(0.4);
+		}
+	}
+
+	@keyframes glow {
+		from {
+			opacity: 0;
+			transform: scale(0.3);
+		}
+		40% {
+			opacity: 1;
+		}
+		to {
+			opacity: 0.55;
+			transform: scale(1);
+		}
+	}
+
+	@keyframes draw {
+		from {
+			opacity: 0;
+			transform: scaleX(0);
 		}
 	}
 
@@ -311,6 +389,10 @@
 		.card,
 		.card.cheer,
 		.stamp,
+		.stamp::before,
+		.moth,
+		.wings,
+		.rule,
 		.stamp span,
 		.cipher li,
 		.flip,
