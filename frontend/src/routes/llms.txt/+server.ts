@@ -1,7 +1,7 @@
 import { text } from '@sveltejs/kit';
-import { about } from '$lib/data/about';
-import { projects } from '$lib/data/projects';
-import { SITE_URL } from '$lib/site';
+import { about } from '#lib/data/about';
+import { projects } from '#lib/data/projects';
+import { SITE_URL } from '#lib/site';
 import type { RequestHandler } from './$types';
 
 export const prerender = true;

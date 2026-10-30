@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { about, About } from '$lib/data/about';
-	import { projects } from '$lib/data/projects';
-	import ContentPage from '$lib/components/ContentPage.svelte';
-	import ProjectCard from '$lib/components/ProjectCard.svelte';
+	import { about, About } from '#lib/data/about';
+	import { projects } from '#lib/data/projects';
+	import ContentPage from '#lib/components/ContentPage.svelte';
+	import ProjectCard from '#lib/components/ProjectCard.svelte';
 </script>
 
 <svelte:head>

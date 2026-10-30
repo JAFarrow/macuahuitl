@@ -65,39 +65,56 @@ func accessLog(next http.Handler) http.Handler {
 		r = r.WithContext(context.WithValue(r.Context(), metaCtxKey{}, meta))
 		rec := &statusRecorder{ResponseWriter: w}
 		start := time.Now()
-		next.ServeHTTP(rec, r)
-		dur := time.Since(start)
+		defer func() {
+			panicked := recover()
+			dur := time.Since(start)
 
-		status := rec.status
-		if status == 0 {
-			status = http.StatusOK
-		}
-		typ := meta.typ
-		if typ == "" {
-			typ = "html"
-		}
-		ip, _, err := net.SplitHostPort(r.RemoteAddr)
-		if err != nil {
-			ip = r.RemoteAddr
-		}
-		if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
-			ip = strings.TrimSpace(strings.Split(fwd, ",")[0])
-		}
-		level := slog.LevelInfo
-		if status >= http.StatusInternalServerError {
-			level = slog.LevelError
-		}
-		slog.LogAttrs(r.Context(), level, fmt.Sprintf("%s %d %dms", r.Pattern, status, dur.Milliseconds()),
-			slog.String("method", r.Method),
-			slog.String("route", r.Pattern),
-			slog.String("path", r.URL.Path),
-			slog.Int("status", status),
-			slog.Float64("duration_ms", float64(dur.Microseconds())/1e3),
-			slog.Int("bytes", rec.bytes),
-			slog.String("type", typ),
-			slog.String("user_agent", r.UserAgent()),
-			slog.String("referer", r.Referer()),
-			slog.String("ip", ip),
-		)
+			status := rec.status
+			if status == 0 {
+				status = http.StatusOK
+			}
+			if panicked != nil && rec.status == 0 {
+				status = http.StatusInternalServerError
+			}
+			typ := meta.typ
+			if typ == "" {
+				typ = "html"
+			}
+			ip, _, err := net.SplitHostPort(r.RemoteAddr)
+			if err != nil {
+				ip = r.RemoteAddr
+			}
+			if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
+				ip = strings.TrimSpace(strings.Split(fwd, ",")[0])
+			}
+			level := slog.LevelInfo
+			if status >= http.StatusInternalServerError {
+				level = slog.LevelError
+			}
+			attrs := []slog.Attr{
+				slog.String("method", r.Method),
+				slog.String("route", r.Pattern),
+				slog.String("host", r.Host),
+				slog.String("path", r.URL.Path),
+			}
+			if r.URL.RawQuery != "" {
+				attrs = append(attrs, slog.String("query", r.URL.RawQuery))
+			}
+			attrs = append(attrs,
+				slog.Int("status", status),
+				slog.Float64("duration_ms", float64(dur.Microseconds())/1e3),
+				slog.Int("bytes", rec.bytes),
+				slog.String("type", typ),
+				slog.String("content_type", rec.Header().Get("Content-Type")),
+				slog.String("user_agent", r.UserAgent()),
+				slog.String("referer", r.Referer()),
+				slog.String("ip", ip),
+			)
+			slog.LogAttrs(r.Context(), level, fmt.Sprintf("%s %s %d", r.Method, r.URL.Path, status), attrs...)
+			if panicked != nil {
+				panic(panicked)
+			}
+		}()
+		next.ServeHTTP(rec, r)
 	})
 }
