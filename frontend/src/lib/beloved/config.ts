@@ -8,19 +8,26 @@ export interface Question {
 
 export const questions: Question[] = [
 	{
-		prompt: 'PLACEHOLDER 1 — Where did we have our first date?',
-		answers: ['placeholder one'],
-		nudge: 'Close your eyes and think back to that evening…'
+		prompt: 'With a dream in mind, the sea in front of you, turn right, across the garden, you find...',
+		answers: ['a studio', 'studio', 'art studio', 'my studio'],
+		nudge: 'Where childrens\' books come to life.'
 	},
 	{
-		prompt: 'PLACEHOLDER 2 — What is my favourite thing to order when we eat out?',
-		answers: ['placeholder two'],
-		nudge: 'You know this one. You have rolled your eyes at it often enough.'
+		prompt: 'For most, an expression. For us, a pet name.',
+		answers: ['scrunch'],
+		nudge: 'When you\'re feeling particularly shy.'
 	},
 	{
-		prompt: 'PLACEHOLDER 3 — Which song is unmistakably ours?',
-		answers: ['placeholder three'],
-		nudge: 'Hum it to yourself, the answer will follow.'
+		prompt: 'Fluttering, and kept. Full, and quiet.',
+		answers: [
+			'a cageful of butterflies',
+			'cageful of butterflies',
+			'cage full of butterflies',
+			'a cage full of butterflies',
+			'a cage of butterflies',
+			'cage of butterflies'
+		],
+		nudge: 'It\'s the one I read to you when the day has been too much.'
 	}
 ];
 

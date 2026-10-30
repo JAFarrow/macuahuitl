@@ -9,7 +9,6 @@
 	let error = $state('');
 	let shake = $state(false);
 	let ready = $state(false);
-	let topHeight = $state(0);
 
 	const confetti = Array.from({ length: 36 }, (_, i) => ({
 		left: (i * 97) % 100,
@@ -49,8 +48,8 @@
 		<p class="eyebrow">Happy birthday, {name}</p>
 		<h1>We are going to see {concert.artist}</h1>
 
-		<section class="ticket" style="--tear:{topHeight}px">
-			<div class="top" bind:clientHeight={topHeight}>
+		<section class="ticket">
+			<div class="top">
 				<p class="tour">{concert.tour}</p>
 				<p class="when">{concert.date}</p>
 				<p class="where">{concert.venue}, {concert.city}</p>
@@ -112,20 +111,6 @@
 		left: 8px;
 		z-index: -1;
 		background: var(--accent);
-		-webkit-mask:
-			radial-gradient(
-				circle 8px at calc(100% - 8px) calc(var(--tear) - 8px),
-				transparent 96%,
-				#000 100%
-			),
-			linear-gradient(to right, transparent calc(100% - 8px), #000 calc(100% - 8px));
-		mask:
-			radial-gradient(
-				circle 8px at calc(100% - 8px) calc(var(--tear) - 8px),
-				transparent 96%,
-				#000 100%
-			),
-			linear-gradient(to right, transparent calc(100% - 8px), #000 calc(100% - 8px));
 	}
 
 	.top,

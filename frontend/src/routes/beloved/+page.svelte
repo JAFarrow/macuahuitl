@@ -69,10 +69,9 @@
 	{#if step === 0}
 		<section class="card">
 			<p>
-				Happy early birthday. There is a surprise waiting for you, but it is locked behind a
-				password, and the password is written in a letter that only a secret key can open.
+				Happy birthday. I've kept something for you, and it only opens for you. Answer me three
+				things and it's yours.
 			</p>
-			<p>Answer a few questions to earn the key.</p>
 			<button class="btn" onclick={() => go(1)}>Begin</button>
 		</section>
 	{:else if question}
