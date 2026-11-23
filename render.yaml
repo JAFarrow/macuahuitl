@@ -7,3 +7,6 @@ services:
     branch: main
     healthCheckPath: /api/health
     autoDeploy: true
+    envVars:
+      - key: GPUWATCH
+        value: "on"

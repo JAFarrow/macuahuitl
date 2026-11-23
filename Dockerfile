@@ -10,11 +10,12 @@ RUN cd frontend && npm run build
 
 FROM golang:1.26-alpine AS server
 WORKDIR /app
-COPY go.mod main.go logging.go ./
+COPY go.mod main.go logging.go gpuwatch.go ./
 COPY content/ content/
 COPY --from=frontend /app/frontend/build frontend/build
 RUN CGO_ENABLED=0 go build -o macuahuitl .
 
 FROM scratch
+COPY --from=server /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=server /app/macuahuitl /macuahuitl
 ENTRYPOINT ["/macuahuitl"]

@@ -62,6 +62,9 @@ func main() {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	if os.Getenv("GPUWATCH") == "on" {
+		go watchGPUs(ctx, gpuDefaultEvery)
+	}
 	shutdown := make(chan struct{})
 	go func() {
 		defer close(shutdown)
