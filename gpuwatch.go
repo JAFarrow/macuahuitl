@@ -153,17 +153,26 @@ func headerSafe(s string) string {
 	return mime.QEncoding.Encode("utf-8", strings.TrimSpace(s))
 }
 
-func notifyNTFY(ctx context.Context, client *http.Client, topic string, l gpuListing, price string) error {
-	body := price + " · " + l.Location
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, ntfyBaseURL+topic, strings.NewReader(body))
+type ntfyMessage struct {
+	Title    string
+	Body     string
+	Click    string
+	Priority string
+	Tags     string
+}
+
+func sendNTFY(ctx context.Context, client *http.Client, topic string, m ntfyMessage) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, ntfyBaseURL+topic, strings.NewReader(m.Body))
 	if err != nil {
 		return err
 	}
 	req.Header.Set("User-Agent", "macuahuitl-gpuwatch")
-	req.Header.Set("Title", headerSafe(l.Title))
-	req.Header.Set("Click", headerSafe(l.Link))
-	req.Header.Set("Priority", "high")
-	req.Header.Set("Tags", "video_camera")
+	req.Header.Set("Title", headerSafe(m.Title))
+	req.Header.Set("Priority", m.Priority)
+	req.Header.Set("Tags", m.Tags)
+	if m.Click != "" {
+		req.Header.Set("Click", headerSafe(m.Click))
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
@@ -179,10 +188,33 @@ func notifyNTFY(ctx context.Context, client *http.Client, topic string, l gpuLis
 	return nil
 }
 
+func notifyNTFY(ctx context.Context, client *http.Client, topic string, l gpuListing, price string) error {
+	return sendNTFY(ctx, client, topic, ntfyMessage{
+		Title:    l.Title,
+		Body:     price + " · " + l.Location,
+		Click:    l.Link,
+		Priority: "high",
+		Tags:     "video_camera",
+	})
+}
+
 func watchGPUs(ctx context.Context, every time.Duration) {
 	client := &http.Client{Timeout: 20 * time.Second}
 	topic := os.Getenv("NTFY_TOPIC")
 	notified := map[string]bool{}
+	if topic != "" {
+		ping := ntfyMessage{
+			Title:    "gpuwatch started",
+			Body:     "polling every " + every.String(),
+			Priority: "default",
+			Tags:     "white_check_mark",
+		}
+		if err := sendNTFY(ctx, client, topic, ping); err != nil {
+			slog.Warn("ntfy startup ping failed", "err", err)
+		} else {
+			slog.Info("ntfy startup ping sent")
+		}
+	}
 	poll := func() {
 		items, err := fetchGPUFeed(ctx, client)
 		if err != nil {
