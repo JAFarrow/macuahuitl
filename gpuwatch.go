@@ -7,7 +7,9 @@ import (
 	"html"
 	"io"
 	"log/slog"
+	"mime"
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -19,6 +21,7 @@ const (
 	gpuMaxPriceZAR  = 5000
 	gpuDefaultEvery = 30 * time.Minute
 	gpuMaxFeedBytes = 4 << 20
+	ntfyBaseURL     = "https://ntfy.sh/"
 )
 
 type gpuFeed struct {
@@ -140,9 +143,78 @@ func fetchGPUFeed(ctx context.Context, client *http.Client) ([]gpuItem, error) {
 	return parseGPUFeed(resp.Body)
 }
 
+func headerSafe(s string) string {
+	s = strings.Map(func(r rune) rune {
+		if r < ' ' || r == 0x7f {
+			return ' '
+		}
+		return r
+	}, s)
+	return mime.QEncoding.Encode("utf-8", strings.TrimSpace(s))
+}
+
+type ntfyMessage struct {
+	Title    string
+	Body     string
+	Click    string
+	Priority string
+	Tags     string
+}
+
+func sendNTFY(ctx context.Context, client *http.Client, topic string, m ntfyMessage) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, ntfyBaseURL+topic, strings.NewReader(m.Body))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("User-Agent", "macuahuitl-gpuwatch")
+	req.Header.Set("Title", headerSafe(m.Title))
+	req.Header.Set("Priority", m.Priority)
+	req.Header.Set("Tags", m.Tags)
+	if m.Click != "" {
+		req.Header.Set("Click", headerSafe(m.Click))
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			slog.Debug("close ntfy body", "err", err)
+		}
+	}()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("ntfy status %d", resp.StatusCode)
+	}
+	return nil
+}
+
+func notifyNTFY(ctx context.Context, client *http.Client, topic string, l gpuListing, price string) error {
+	return sendNTFY(ctx, client, topic, ntfyMessage{
+		Title:    l.Title,
+		Body:     price + " · " + l.Location,
+		Click:    l.Link,
+		Priority: "high",
+		Tags:     "video_camera",
+	})
+}
+
 func watchGPUs(ctx context.Context, every time.Duration) {
 	client := &http.Client{Timeout: 20 * time.Second}
-	seen := map[string]struct{}{}
+	topic := os.Getenv("NTFY_TOPIC")
+	notified := map[string]bool{}
+	if topic != "" {
+		ping := ntfyMessage{
+			Title:    "gpuwatch started",
+			Body:     "polling every " + every.String(),
+			Priority: "default",
+			Tags:     "white_check_mark",
+		}
+		if err := sendNTFY(ctx, client, topic, ping); err != nil {
+			slog.Warn("ntfy startup ping failed", "err", err)
+		} else {
+			slog.Info("ntfy startup ping sent")
+		}
+	}
 	poll := func() {
 		items, err := fetchGPUFeed(ctx, client)
 		if err != nil {
@@ -155,23 +227,29 @@ func watchGPUs(ctx context.Context, every time.Duration) {
 			if !ok {
 				continue
 			}
-			if _, dup := seen[l.GUID]; dup {
-				continue
-			}
-			seen[l.GUID] = struct{}{}
-			fresh++
 			price := "unknown"
 			if l.Price >= 0 {
 				price = "R" + strconv.Itoa(l.Price)
 			}
-			slog.Warn("gpu listing",
-				"event", "gpu_listing",
-				"title", l.Title,
-				"price", price,
-				"location", l.Location,
-				"link", l.Link,
-				"posted", l.Posted,
-			)
+			if _, known := notified[l.GUID]; !known {
+				notified[l.GUID] = false
+				fresh++
+				slog.Warn("gpu listing",
+					"event", "gpu_listing",
+					"title", l.Title,
+					"price", price,
+					"location", l.Location,
+					"link", l.Link,
+					"posted", l.Posted,
+				)
+			}
+			if topic != "" && !notified[l.GUID] {
+				if err := notifyNTFY(ctx, client, topic, l, price); err != nil {
+					slog.Warn("gpu notify failed", "err", err, "link", l.Link)
+					continue
+				}
+				notified[l.GUID] = true
+			}
 		}
 		slog.Info("gpu feed polled", "items", len(items), "new_matches", fresh)
 	}
