@@ -10,3 +10,5 @@ services:
     envVars:
       - key: GPUWATCH
         value: "on"
+      - key: NTFY_TOPIC
+        sync: false
